@@ -156,7 +156,7 @@ export default function App() {
           </p>
           <h3 style={{ fontSize: '0.82rem', fontWeight: 700, margin: '1rem 0 0.5rem' }}>Citation</h3>
           <p style={{ fontSize: '0.78rem', color: '#94a3b8', fontStyle: 'italic' }}>
-            Olagunju, D. et al. (2026). Between-Laboratory Generalisation of CO₂–Brine Interfacial Tension Models: Why External Validation Reverses the Model Ranking.
+            Olagunju, D. et al. (2026). Closed-Form MARS Equations with Calibrated Conformal Uncertainty for CO₂–Brine Interfacial Tension Prediction in Geological Carbon Storage.
           </p>
           <h3 style={{ fontSize: '0.82rem', fontWeight: 700, margin: '1rem 0 0.5rem' }}>Privacy</h3>
           <p style={{ fontSize: '0.78rem', lineHeight: 1.7 }}>
