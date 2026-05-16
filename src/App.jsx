@@ -60,13 +60,6 @@ export default function App() {
       <header className="app-header">
         <h1>IFT-<span>SafePredict</span></h1>
         <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
-          <a
-            href={`${BASE_URL}IFT_SafePredict_v1.0.xlsx`}
-            download
-            className="download-excel-btn"
-          >
-            ↓ Excel Tool
-          </a>
           <span className="version">Sub-MARS-16t | Sup-MARS-35t | v1.0</span>
         </div>
       </header>
