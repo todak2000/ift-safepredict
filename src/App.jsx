@@ -138,8 +138,8 @@ export default function App() {
               <tr style={{ borderBottom: '1px solid #1e293b' }}>
                 <td style={{ padding: '0.3rem 0.5rem' }}>Subcritical</td>
                 <td style={{ padding: '0.3rem 0.5rem' }}>MARS 16-term</td>
-                <td style={{ padding: '0.3rem 0.5rem' }}>5.95%</td>
-                <td style={{ padding: '0.3rem 0.5rem' }}>18.1%</td>
+                <td style={{ padding: '0.3rem 0.5rem' }}>5.46%</td>
+                <td style={{ padding: '0.3rem 0.5rem' }}>17.00%</td>
               </tr>
               <tr>
                 <td style={{ padding: '0.3rem 0.5rem' }}>Supercritical</td>
@@ -156,8 +156,7 @@ export default function App() {
           </p>
           <h3 style={{ fontSize: '0.82rem', fontWeight: 700, margin: '1rem 0 0.5rem' }}>Citation</h3>
           <p style={{ fontSize: '0.78rem', color: '#94a3b8', fontStyle: 'italic' }}>
-            Olagunju, D. et al. (2026). CO₂-Brine Interfacial Tension Prediction via
-            Dual-Regime MARS Models with Conformal Uncertainty Quantification.
+            Olagunju, D. et al. (2026). Between-Laboratory Generalisation of CO₂–Brine Interfacial Tension Models: Why External Validation Reverses the Model Ranking.
           </p>
           <h3 style={{ fontSize: '0.82rem', fontWeight: 700, margin: '1rem 0 0.5rem' }}>Privacy</h3>
           <p style={{ fontSize: '0.78rem', lineHeight: 1.7 }}>
