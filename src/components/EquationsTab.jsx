@@ -177,7 +177,7 @@ const EQ_SUB_MARS = `\\begin{aligned}
 {}+{}& 201.286\\; h^{-}(\\tilde{P}_r,\\;{-}0.7198)\\cdot h^{+}(\\widetilde{\\mathrm{MCM}},\\;{-}0.3023)
 \\end{aligned}`
 
-// Supercritical MARS — 34 active terms
+// Supercritical MARS — 34 active terms + intercept
 const EQ_SUP_MARS_A = `\\begin{aligned}
 \\hat{\\gamma}_{\\mathrm{sup}} ={}&
   221.147 \\\\[2pt]
@@ -384,9 +384,9 @@ export default function EquationsTab() {
           Test nRMSE: 5.95 % · External validation nRMSE: 18.1 %.
         </p>
         <EqBlock
-          label="Subcritical MARS — 18 active terms + intercept"
+          label="Subcritical MARS — 15 active terms + intercept"
           latex={EQ_SUB_MARS}
-          note="Three terms with knot at −1 (always zero in scaled domain) are omitted."
+          note=""
         />
       </Section>
 
