@@ -33,11 +33,8 @@ jobs:
       - name: Install dependencies
         run: yarn install --frozen-lockfile
 
-      - name: Generate Excel tool
-        run: node scripts/generateExcel.cjs
-
       - name: Build
-        run: npx vite build
+        run: yarn build
 
       - name: Deploy to gh-pages branch
         uses: peaceiris/actions-gh-pages@v4
