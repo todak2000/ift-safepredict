@@ -49,8 +49,10 @@ const liveRegime = (inputs) => {
 }
 
 export default function App() {
+  const BASE = import.meta.env.BASE_URL
+
   // Route /analytics to the standalone dashboard
-  if (window.location.pathname.startsWith('/analytics')) {
+  if (window.location.pathname.startsWith(BASE + 'analytics')) {
     return <AnalyticsDashboard />
   }
 
@@ -290,7 +292,7 @@ export default function App() {
         IFT-SafePredict v1.0 | Sub-MARS-16t | Sup-MARS-35t |
         All computation is client-side — no data is transmitted.
         <div style={{ marginTop: '0.75rem', fontSize: '0.65rem' }}>
-          <a href="/analytics" style={{ color: 'var(--color-border)', textDecoration: 'none' }}>admin</a>
+          <a href={BASE + 'analytics'} style={{ color: 'var(--color-border)', textDecoration: 'none' }}>admin</a>
         </div>
       </footer>
     </div>

@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "node scripts/generateExcel.cjs && vite build",
+    "build": "node scripts/generateExcel.cjs && vite build && cp dist/index.html dist/404.html",
     "preview": "vite preview",
     "test": "jest",
     "generate-excel": "node scripts/generateExcel.cjs"
