@@ -57,9 +57,11 @@ const SCALERS = {
          MCM:[0.000, 4.900], BCM:[0.000, 1.500],
          x_CH4:[0.000, 0.890], x_N2:[0.000, 0.7636],
          drho_sq:[0.000132359895430, 1.294887038140309] },
-  // NOTE: sup bounds kept at narrowed values — sup equation authored against these.
-  sup: { Pr:[1.011, 4.457], Tr:[1.002, 1.258], MCM:[0.000, 4.880], BCM:[0.000, 1.480],
-         x_CH4:[0.000, 0.200], x_N2:[0.000, 0.150], drho_sq:[0.001, 0.198] },
+  sup: { Pr:[1.0027100271002711, 9.418699186991873],
+         Tr:[1.0125542263704483, 2.2171965898227066],
+         MCM:[0.000, 4.950], BCM:[0.000, 5.000],
+         x_CH4:[0.000, 0.890], x_N2:[0.000, 0.7636],
+         drho_sq:[0.001681, 1.6030851769] },
 };
 
 // ─── MARS sub hinge terms (coeff, feature, knot, [feat2, knot2]) ──────────────
@@ -221,8 +223,8 @@ function buildMarsSheet(ws) {
   const hp = (f, k) => `MAX(0,SC_${f}-(${k}))`;
   const hm = (f, k) => `MAX(0,(${k})-SC_${f})`;
 
-  // 14 active terms — dead term (-499.8016*hm(drho_sq,0.0282)*hm(CH4_bin,-1)) omitted (always 0).
-  // Active features: Pr, Tr, drho_sq only. Coefficients from global_sub_mars_equation.json.
+  // 15 active terms. Coefficients from global_sub_mars_equation.json, verified via marsEngine.js.
+  // CH4_bin and x_CH4 use ME_CH4_bin (binary flag 0/1 → mapped to -1/+1) and SC_x_CH4 (scaled continuous).
   const subTerms = [
     ['+17.9632',  `${hp('drho_sq','0.0282')}`],
     ['+275.2586', `${hm('drho_sq','0.0282')}`],
@@ -235,9 +237,10 @@ function buildMarsSheet(ws) {
     ['-55.2389',  `${hp('Pr','-0.7198')}*${hp('drho_sq','-0.7039')}`],
     ['-97.8475',  `${hp('Pr','-0.7198')}*${hm('drho_sq','-0.7039')}`],
     ['+66.6219',  `${hp('Tr','-0.516')}*${hp('drho_sq','0.0282')}`],
-    ['+283.6242', `${hm('Tr','-0.516')}*${hp('drho_sq','0.0282')}`],
-    ['-45.0736',  `${hp('Tr','-0.8978')}*${hm('drho_sq','0.0282')}`],
-    ['+38.3241',  `${hm('Tr','-0.8978')}*${hm('drho_sq','0.0282')}`],
+    ['+283.6242', `${hm('drho_sq','0.0282')}*(2*ME_CH4_bin-1)`],
+    ['-499.8016', `${hp('Tr','-0.8978')}*${hm('drho_sq','0.0282')}`],
+    ['-45.0736',  `${hm('Tr','-0.8978')}*${hm('drho_sq','0.0282')}`],
+    ['+38.3241',  `${hm('Tr','-0.3956')}*SC_x_CH4`],
   ];
 
   const subTermRows = subTerms.map(([coeff, hingeFormula], i) => {
@@ -257,43 +260,42 @@ function buildMarsSheet(ws) {
   // ─ Section: Supercritical MARS (35 terms) ─
   addSection('§4 — Supercritical MARS (35-term) — used when regime = Supercritical');
 
-  // 33 active terms — dead term (-20.8103*hm(BCM,-1)*hp(drho_sq,0.4517)) omitted (always 0).
-  // Coefficients from global_sup_mars_equation.json (full precision).
+  // 34 active terms. Coefficients from global_sup_mars_equation.json, verified via marsEngine.js.
   const supTerms = [
-    ['-59.8927',    `${hp('drho_sq','0.4517')}`],
-    ['+84.6131',    `${hm('drho_sq','0.4517')}`],
-    ['-32.995',     `${hp('x_N2','0.9652')}`],
-    ['-64.0876',    `${hm('x_N2','0.9652')}`],
-    ['+3.4684',     `${hp('x_CH4','0.7966')}`],
-    ['-8.4184',     `${hm('x_CH4','0.7966')}`],
-    ['-1959.2987',  `${hp('BCM','-0.64')}*${hm('drho_sq','0.4517')}`],
-    ['+34.4304',    `${hm('BCM','-0.64')}*${hm('drho_sq','0.4517')}`],
-    ['+3.1914',     `${hp('Tr','-0.5087')}*${hm('drho_sq','0.4517')}`],
-    ['-8.6816',     `${hm('Tr','-0.5087')}*${hm('drho_sq','0.4517')}`],
-    ['+4.235',      `${hp('MCM','-0.802')}*${hm('drho_sq','0.4517')}`],
-    ['-29.5554',    `${hm('MCM','-0.802')}*${hm('drho_sq','0.4517')}`],
-    ['+31.1754',    `${hp('Tr','-0.7733')}*${hm('x_N2','0.9652')}`],
-    ['+1733.7711',  `${hm('Tr','-0.7733')}*${hm('x_N2','0.9652')}`],
-    ['+302.2371',   `${hp('Tr','-0.7165')}*${hm('drho_sq','0.4517')}`],
-    ['+28.3565',    `${hp('Tr','-0.499')}*${hm('drho_sq','0.4517')}`],
-    ['-136.4932',   `${hp('Tr','-0.5359')}*${hm('drho_sq','0.4517')}`],
-    ['-133.9788',   `${hp('Pr','-0.9628')}*${hm('x_CH4','0.7966')}`],
-    ['+126.0387',   `${hm('Pr','-0.9628')}*${hm('x_CH4','0.7966')}`],
-    ['+8.6252',     `${hp('Tr','-0.437')}*${hm('drho_sq','0.4517')}`],
-    ['-13.5765',    `${hm('x_CH4','0.7966')}*${hp('x_N2','-0.3434')}`],
-    ['+21.9898',    `${hm('x_CH4','0.7966')}*${hp('x_N2','-0.3675')}`],
-    // term23: -20.8103*hm(BCM,-1)*hp(drho_sq,0.4517) = 0 always — omitted (dead term)
-    ['+24.6178',    `${hp('Pr','-0.8438')}*${hm('x_N2','0.9652')}`],
-    ['+24.9711',    `${hm('Pr','-0.8438')}*${hm('x_N2','0.9652')}`],
-    ['-19.7154',    `${hp('x_N2','0.2907')}*${hm('drho_sq','0.4517')}`],
-    ['+2.3966',     `${hm('x_N2','0.2907')}*${hm('drho_sq','0.4517')}`],
-    ['+68.834',     `${hp('Pr','-0.7159')}`],
-    ['+3.7786',     `${hm('Pr','-0.7159')}`],
-    ['+5.372',      `${hp('BCM','-0.982')}*${hm('x_N2','0.9652')}`],
-    ['-31.8591',    `${hm('BCM','-0.982')}*${hm('x_N2','0.9652')}`],
-    ['+11.3604',    `${hp('Tr','-0.3379')}*${hm('x_CH4','0.7966')}`],
-    ['+25.7311',    `${hm('Tr','-0.3379')}*${hm('x_CH4','0.7966')}`],
-    ['-133.2863',   `${hp('x_CH4','-0.7551')}*${hm('x_N2','0.9652')}`],
+    ['-59.8927',    `${hm('drho_sq','0.4517')}`],
+    ['+84.6131',    `${hp('x_N2','0.9652')}`],
+    ['-32.995',     `${hm('x_N2','0.9652')}`],
+    ['-64.0876',    `${hm('x_CH4','0.7966')}`],
+    ['+3.4684',     `${hp('BCM','-0.64')}*${hm('drho_sq','0.4517')}`],
+    ['-8.4184',     `${hm('BCM','-0.64')}*${hm('drho_sq','0.4517')}`],
+    ['-1959.2987',  `${hp('Tr','-0.5087')}*${hm('drho_sq','0.4517')}`],
+    ['+34.4304',    `${hm('Tr','-0.5087')}*${hm('drho_sq','0.4517')}`],
+    ['+3.1914',     `${hp('MCM','-0.802')}*${hm('drho_sq','0.4517')}`],
+    ['-8.6816',     `${hm('MCM','-0.802')}*${hm('drho_sq','0.4517')}`],
+    ['+4.235',      `${hp('Tr','-0.7733')}*${hm('x_N2','0.9652')}`],
+    ['-29.5554',    `${hm('Tr','-0.7733')}*${hm('x_N2','0.9652')}`],
+    ['+31.1754',    `${hp('Tr','-0.7165')}*${hm('drho_sq','0.4517')}`],
+    ['+1733.7711',  `${hp('Tr','-0.499')}*${hm('drho_sq','0.4517')}`],
+    ['+302.2371',   `${hp('Tr','-0.5359')}*${hm('drho_sq','0.4517')}`],
+    ['+28.3565',    `${hm('Pr','-0.9628')}*${hm('x_CH4','0.7966')}`],
+    ['-136.4932',   `${hp('Tr','-0.437')}*${hm('drho_sq','0.4517')}`],
+    ['-133.9788',   `${hm('x_CH4','0.7966')}*${hp('x_N2','-0.3434')}`],
+    ['+126.0387',   `${hm('x_CH4','0.7966')}*${hp('x_N2','-0.3675')}`],
+    ['+8.6252',     `SC_BCM*${hp('drho_sq','0.4517')}`],
+    ['-13.5765',    `${hp('Pr','-0.8438')}*${hm('x_N2','0.9652')}`],
+    ['+21.9898',    `${hm('Pr','-0.8438')}*${hm('x_N2','0.9652')}`],
+    ['-20.8103',    `${hp('x_N2','0.2907')}*${hm('drho_sq','0.4517')}`],
+    ['+24.6178',    `${hm('x_N2','0.2907')}*${hm('drho_sq','0.4517')}`],
+    ['+24.9711',    `${hp('Pr','-0.7159')}`],
+    ['-19.7154',    `${hm('Pr','-0.7159')}`],
+    ['+2.3966',     `${hp('BCM','-0.982')}*${hm('x_N2','0.9652')}`],
+    ['+68.834',     `${hm('BCM','-0.982')}*${hm('x_N2','0.9652')}`],
+    ['+3.7786',     `${hp('Tr','-0.3379')}*${hm('x_CH4','0.7966')}`],
+    ['+5.372',      `${hm('Tr','-0.3379')}*${hm('x_CH4','0.7966')}`],
+    ['-31.8591',    `${hp('x_CH4','-0.7551')}*${hm('x_N2','0.9652')}`],
+    ['+11.3604',    `${hp('x_CH4','-0.5506')}*${hm('drho_sq','0.4517')}`],
+    ['+25.7311',    `${hm('x_CH4','-0.5506')}*${hm('drho_sq','0.4517')}`],
+    ['-133.2863',   `${hm('Pr','-0.7159')}*${hm('Tr','-0.9192')}`],
   ];
 
   const supTermRows = supTerms.map(([coeff, hingeFormula], i) => {
@@ -596,7 +598,7 @@ function buildInstructionsSheet(ws) {
   ws.addRow([]);
   h2('§4  Model training summary');
   p('Dataset    : 3,265 CO₂-Brine IFT measurements (1,400 subcritical + 1,865 supercritical), 16 laboratories.');
-  p('Subcritical: MARS 16-term (compliance-fixed). Test nRMSE=5.95%, R²=0.939. Features: Pr, Tr, Δρ², x_CH₄, CH4_bin.');
+  p('Subcritical: MARS 16-term (compliance-fixed). Test nRMSE=5.46%, R²=0.939. Features: Pr, Tr, Δρ², x_CH₄, CH4_bin.');
   p('Supercritical: MARS 35-term. Test nRMSE=5.60%, R²=0.928. Features: all 10 (Pr,Tr,MCM,BCM,x_CH₄,x_N₂,Δρ²,BCM_bin,CH4_bin,N2_bin).');
   p('UQ: 80% conformal prediction intervals. Base half-width ±2.44 mN/m (sub), ±2.25 mN/m (sup).');
   p('P10/P90 clamped at physical limits: floor 12.4 mN/m, cap 78.88 mN/m.');

@@ -179,10 +179,10 @@ const EQ_SUB_MARS = `\\begin{aligned}
 const EQ_SUP_MARS_A = `\\begin{aligned}
 \\hat{\\gamma}_{\\mathrm{sup}} ={}&
   221.147 \\\\[2pt]
-{-}{}& 59.8927\\; h^{+}(\\tilde{d},\\;0.4517) \\\\
-{}+{}& 84.6131\\; h^{-}(\\tilde{n},\\;0.9652) \\\\
-{-}{}& 32.9950\\; h^{+}(\\tilde{n},\\;0.9652) \\\\
-{-}{}& 64.0876\\; h^{+}(\\tilde{c},\\;0.7966) \\\\
+{-}{}& 59.8927\\; h^{-}(\\tilde{d},\\;0.4517) \\\\
+{}+{}& 84.6131\\; h^{+}(\\tilde{n},\\;0.9652) \\\\
+{-}{}& 32.9950\\; h^{-}(\\tilde{n},\\;0.9652) \\\\
+{-}{}& 64.0876\\; h^{-}(\\tilde{c},\\;0.7966) \\\\
 {}+{}& 3.4684\\; h^{+}(\\widetilde{\\mathrm{BCM}},\\;{-}0.64)\\cdot h^{-}(\\tilde{d},\\;0.4517) \\\\
 {-}{}& 8.4184\\; h^{-}(\\widetilde{\\mathrm{BCM}},\\;{-}0.64)\\cdot h^{-}(\\tilde{d},\\;0.4517) \\\\
 {-}{}& 1959.30\\; h^{+}(\\tilde{T}_r,\\;{-}0.5087)\\cdot h^{-}(\\tilde{d},\\;0.4517) \\\\
@@ -375,11 +375,11 @@ export default function EquationsTab() {
       </Section>
 
       {/* ── Section 4: Subcritical MARS ── */}
-      <Section title="4 · Subcritical MARS Model (Sub-MARS-20t)">
+      <Section title="4 · Subcritical MARS Model (Sub-MARS-16t)">
         <p style={{ fontSize: '0.78rem', color: '#94a3b8', marginBottom: '0.75rem', lineHeight: 1.6 }}>
           Applied when <InlineMath latex="P_r < 1" /> or <InlineMath latex="T_r < 1" />.
           Output <InlineMath latex="\hat{\gamma}_{\mathrm{sub}}" /> is in mN/m.
-          Test nRMSE: 5.95 % · External validation nRMSE: 18.1 %.
+          Test nRMSE: 5.46 % · External validation nRMSE: 17.00 %.
         </p>
         <EqBlock
           label="Subcritical MARS — 15 active terms + intercept"
@@ -423,7 +423,7 @@ export default function EquationsTab() {
           </div>
           <BlockMath latex={EQ_SUP_MARS_B} />
           <div style={{ fontSize: '0.68rem', color: '#64748b', marginTop: '0.3rem', fontStyle: 'italic', textAlign: 'center' }}>
-            Note: term with <InlineMath latex="h^-(\widetilde{\mathrm{BCM}},\,-1)" /> is always zero in scaled domain and retained for completeness.
+            All 35 terms (intercept + 34 active) from <InlineMath latex="global\_sup\_mars\_equation.json" />.
           </div>
         </div>
       </Section>

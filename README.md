@@ -2,6 +2,8 @@
 
 Welcome to the `ift-safepredict` tool! This is a web application built with React and Vite that predicts the Interfacial Tension (IFT) of CO₂-Brine systems using high-precision MARS (Multivariate Adaptive Regression Splines) machine learning models.
 
+**Models:** Sub-MARS-16t (subcritical) · Sup-MARS-35t (supercritical) · 80% conformal prediction interval
+
 This guide is written for beginners to help you run the app on your own computer and publish it to the internet for free using GitHub Pages.
 
 ---
@@ -39,7 +41,7 @@ If you want to share this tool with the public, you can host it for free using *
 5. **Very Important:** Do *not* check any boxes to add a README, `.gitignore`, or license. Leave it completely empty and click **Create repository**.
 
 ### Step B: Push Your Code from the Terminal
-Open your terminal, ensure you are still in the `/Users/todak2000/Desktop/codebase/ift_v4/ift-safepredict` folder, and type these exactly as shown (replace `YOUR_GITHUB_USERNAME` with your actual username):
+Open your terminal, ensure you are still in the `ift-safepredict` folder, and type these exactly as shown (replace `YOUR_GITHUB_USERNAME` with your actual username):
 
 ```bash
 git remote add origin https://github.com/YOUR_GITHUB_USERNAME/ift-safepredict.git
@@ -75,3 +77,79 @@ If you ever make changes to the code (like changing a color or updating text) an
    git push
    ```
 GitHub will automatically rebuild and update your live website within a couple of minutes!
+
+---
+
+## 📋 4. Additional CLI Scripts
+
+| Command | What it does |
+|---|---|
+| `yarn build` | Generate Excel companion tool + production build → `dist/` |
+| `yarn test` | Run Jest unit tests (MARS equations, scalers, QA validator) |
+| `node tests/test_validation.js` | Run end-to-end validation against curated test dataset |
+
+### Generate the Excel Companion Tool
+
+The Excel workbook contains all MARS formulas ready-to-use in Excel (no macros required). Generate it with:
+
+```bash
+yarn build
+# or just the Excel file:
+yarn generate-excel
+```
+
+Output: `public/IFT_SafePredict_v1.0.xlsx` (4 sheets: INPUT, MARS_ENGINE, SCALERS, INSTRUCTIONS)
+
+The Excel tool is also automatically generated every time you run `yarn build`.
+
+### Run the Tests
+
+```bash
+yarn test          # 15 unit tests (equations, bounds, QA logic)
+```
+
+For a full validation across the curated 433-record dataset:
+
+```bash
+node tests/test_validation.js
+```
+
+This validates predictions against all 7 brine types, CH₄/N₂ impurities, both regimes, and 15 laboratory sources.
+
+---
+
+## 📁 Project Structure
+
+```
+ift-safepredict/
+├── src/
+│   ├── logic/
+│   │   ├── marsEngine.js      # MARS hinge functions (sub 16t + sup 35t)
+│   │   ├── scalers.js          # MinMax scaler bounds per regime
+│   │   ├── predict.js          # Prediction pipeline
+│   │   ├── qaValidator.js      # Conformal UQ / UIF escalation
+│   │   ├── eosEngine.js        # Optional EOS density estimation
+│   │   └── exportEngine.js     # CSV/PDF export
+│   ├── components/             # React UI components
+│   └── App.jsx                 # Root app with 4 tabs
+├── scripts/
+│   └── generateExcel.cjs       # Excel workbook generator
+├── tests/
+│   ├── marsEngine.test.cjs     # Jest unit tests
+│   ├── test_validation.js      # End-to-end validation
+│   └── test_data.csv           # 433-row curated dataset
+└── .github/workflows/
+    └── deploy.yml              # GitHub Pages auto-deploy
+```
+
+---
+
+## 🔒 Privacy
+
+This tool is 100% client-side. All computation runs in your browser. No data is transmitted to any server.
+
+---
+
+## 📄 Citation
+
+> Olagunju, D. et al. (2026). *Closed-Form MARS Equations with Calibrated Conformal Uncertainty for CO₂–Brine Interfacial Tension Prediction in Geological Carbon Storage.*

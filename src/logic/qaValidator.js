@@ -62,11 +62,14 @@ export const calculateP10P90 = (prediction, inputs, regime) => {
   }
 
   const halfWidth = qBase * uif;
+  let rawP10 = prediction - halfWidth;
+  let rawP90 = prediction + halfWidth;
+  if (rawP10 > rawP90) [rawP10, rawP90] = [rawP90, rawP10];
 
   return {
     p50: prediction,
-    p10: Math.max(12.4,  prediction - halfWidth),
-    p90: Math.min(78.88, prediction + halfWidth),
+    p10: Math.max(12.4, Math.min(78.88, rawP10)),
+    p90: Math.max(12.4, Math.min(78.88, rawP90)),
     status,
     message,
     uif,
