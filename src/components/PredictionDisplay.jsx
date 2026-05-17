@@ -1,8 +1,10 @@
-import React from 'react'
+import React, { useState } from 'react'
 import QualityBadge from './QualityBadge.jsx'
 import { exportCSV, exportPDF } from '../logic/exportEngine.js'
+import { buildShareUrl } from '../logic/tracking.js'
 
 export default function PredictionDisplay({ result, inputs }) {
+  const [copied, setCopied] = useState(false)
   if (!result) {
     return (
       <div className="card">
@@ -42,6 +44,17 @@ export default function PredictionDisplay({ result, inputs }) {
         <div className="flex gap-sm">
           <button className="btn btn-ghost" onClick={handleCSV}>↓ CSV</button>
           <button className="btn btn-ghost" onClick={handlePDF}>↓ PDF</button>
+          <button
+            className="btn btn-ghost"
+            onClick={() => {
+              navigator.clipboard.writeText(buildShareUrl(inputs))
+              setCopied(true)
+              setTimeout(() => setCopied(false), 2000)
+            }}
+            title="Copy shareable link"
+          >
+            {copied ? '✓ Copied' : '🔗 Share'}
+          </button>
         </div>
       </div>
 

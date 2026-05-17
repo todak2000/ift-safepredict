@@ -1,10 +1,18 @@
-import React, { useState, useCallback } from 'react'
+import React, { useState, useCallback, useEffect } from 'react'
+import AnalyticsDashboard from './components/AnalyticsDashboard.jsx'
 import InputPanel from './components/InputPanel/InputPanel.jsx'
 import PredictionDisplay from './components/PredictionDisplay.jsx'
 import UncertaintyChart from './components/UncertaintyChart.jsx'
 import ScenarioComparison from './components/ScenarioComparison.jsx'
 import EquationsTab from './components/EquationsTab.jsx'
+import InputHistory from './components/InputHistory.jsx'
+import BatchPredict from './components/BatchPredict.jsx'
+import SensitivityChart from './components/SensitivityChart.jsx'
+import ContourMap from './components/ContourMap.jsx'
+import StorageEstimator from './components/StorageEstimator.jsx'
 import { predict, detectRegime } from './logic/predict.js'
+import { savePrediction } from './logic/db.js'
+import { decodeHash, trackPageView, trackPageExit, encodeInputs } from './logic/tracking.js'
 
 const DEFAULT_INPUTS = {
   P: 10.0,
@@ -17,7 +25,18 @@ const DEFAULT_INPUTS = {
   x_N2: 0.0,
   brineType: '',
   eosEstimated: true,
+  presetName: '',
 }
+
+function clearHash() {
+  history.replaceState(null, '', window.location.pathname)
+}
+
+const UNIT_OPTIONS = [
+  { id: 'SI', label: 'SI (MPa, K)' },
+  { id: 'field', label: 'Field (bar, °C)' },
+  { id: 'US', label: 'US (psi, °F)' },
+]
 
 // Compute live regime from current inputs for the regime badge
 const liveRegime = (inputs) => {
@@ -29,21 +48,97 @@ const liveRegime = (inputs) => {
   return detectRegime(Pr, Tr)
 }
 
-const BASE_URL = import.meta.env.BASE_URL
-
 export default function App() {
+  // Route /analytics to the standalone dashboard
+  if (window.location.pathname.startsWith('/analytics')) {
+    return <AnalyticsDashboard />
+  }
+
   const [inputs, setInputs] = useState(DEFAULT_INPUTS)
   const [result, setResult] = useState(null)
   const [history, setHistory] = useState([])
   const [scenarios, setScenarios] = useState([])
   const [activeTab, setActiveTab] = useState('predict')
 
+  const [theme, setTheme] = useState(() => localStorage.getItem('ift-theme') || 'dark')
+  const [unitSystem, setUnitSystem] = useState(() => localStorage.getItem('ift-units') || 'SI')
+
   const { regime, isNearCritical } = liveRegime(inputs)
+
+  // Theme toggle
+  const toggleTheme = useCallback(() => {
+    setTheme(prev => {
+      const next = prev === 'dark' ? 'light' : 'dark'
+      localStorage.setItem('ift-theme', next)
+      document.documentElement.setAttribute('data-theme', next)
+      return next
+    })
+  }, [])
+
+  // Unit system toggle
+  const handleUnitChange = useCallback((id) => {
+    setUnitSystem(id)
+    localStorage.setItem('ift-units', id)
+  }, [])
+
+  const handleReset = useCallback(() => {
+    setInputs(DEFAULT_INPUTS)
+    setResult(null)
+    setHistory([])
+    setScenarios([])
+    clearHash()
+  }, [])
+
+  const handlePresetChange = useCallback((preset) => {
+    setInputs(DEFAULT_INPUTS)
+    setResult(null)
+    setHistory([])
+    setScenarios([])
+    clearHash()
+    setInputs(preset)
+  }, [])
+
+  // Auto-predict whenever inputs change (no URL hash update)
+  useEffect(() => {
+    if (!inputs.brineType) return
+    const r = predict(inputs)
+    setResult(r)
+    setHistory(prev => [...prev.slice(-19), r])
+    savePrediction(inputs, r).catch(() => {})
+  }, [inputs])
+
+  // On mount: check shared URL hash, start tracking
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme)
+    const shared = decodeHash()
+    if (shared) {
+      setInputs(shared)
+      setTimeout(() => document.getElementById('predict-btn')?.click(), 100)
+    }
+    trackPageView(window.location.pathname)
+    window.addEventListener('beforeunload', trackPageExit)
+
+    const handleKey = (e) => {
+      if (e.key === 'Enter' && (e.metaKey || e.ctrlKey) && activeTab === 'predict') {
+        document.getElementById('predict-btn')?.click()
+      }
+      if (e.key === 'Escape' && activeTab === 'predict') {
+        handleReset()
+      }
+    }
+    window.addEventListener('keydown', handleKey)
+    return () => {
+      window.removeEventListener('beforeunload', trackPageExit)
+      window.removeEventListener('keydown', handleKey)
+    }
+  }, [activeTab, theme, handleReset])
 
   const handlePredict = useCallback(() => {
     const r = predict(inputs)
     setResult(r)
     setHistory(prev => [...prev.slice(-19), r])
+    savePrediction(inputs, r).catch(() => {})
+    window.location.hash = encodeInputs(inputs)
   }, [inputs])
 
   const handleSaveScenario = () => {
@@ -59,8 +154,21 @@ export default function App() {
     <div className="app">
       <header className="app-header">
         <h1>IFT-<span>SafePredict</span></h1>
-        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center', flexWrap: 'wrap' }}>
           <span className="version">Sub-MARS-16t | Sup-MARS-35t | v1.0</span>
+          <select
+            className="unit-select"
+            value={unitSystem}
+            onChange={e => handleUnitChange(e.target.value)}
+            title="Unit system"
+          >
+            {UNIT_OPTIONS.map(u => (
+              <option key={u.id} value={u.id}>{u.label}</option>
+            ))}
+          </select>
+          <button className="btn-ghost theme-toggle" onClick={toggleTheme} title="Toggle theme">
+            {theme === 'dark' ? '☀️' : '🌙'}
+          </button>
         </div>
       </header>
 
@@ -73,6 +181,10 @@ export default function App() {
           onClick={() => setActiveTab('equations')}>Equations</button>
         <button className={`tab ${activeTab === 'about' ? 'active' : ''}`}
           onClick={() => setActiveTab('about')}>About</button>
+        <button className={`tab ${activeTab === 'ptmap' ? 'active' : ''}`}
+          onClick={() => setActiveTab('ptmap')}>P–T Map</button>
+        <button className={`tab ${activeTab === 'batch' ? 'active' : ''}`}
+          onClick={() => setActiveTab('batch')}>Batch Predict</button>
       </div>
 
       {activeTab === 'predict' && (
@@ -82,11 +194,14 @@ export default function App() {
               inputs={inputs}
               regime={regime}
               isNearCritical={isNearCritical}
+              unitSystem={unitSystem}
               onChange={setInputs}
               onPredict={handlePredict}
+              onReset={handleReset}
+              onPresetChange={handlePresetChange}
             />
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-              <PredictionDisplay result={result} inputs={inputs} />
+              <PredictionDisplay result={result} inputs={inputs} unitSystem={unitSystem} />
               {result && (
                 <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
                   <button
@@ -99,6 +214,9 @@ export default function App() {
                 </div>
               )}
               <UncertaintyChart result={result} history={history} />
+              {result && <SensitivityChart inputs={inputs} />}
+              {result && <StorageEstimator result={result} />}
+              <InputHistory onLoad={setInputs} />
             </div>
           </div>
         </>
@@ -109,6 +227,15 @@ export default function App() {
       )}
 
       {activeTab === 'equations' && <EquationsTab />}
+
+      {activeTab === 'ptmap' && (
+        <ContourMap
+          inputs={inputs}
+          onSelectPT={({ P, T }) => setInputs(prev => ({ ...prev, P, T }))}
+        />
+      )}
+
+      {activeTab === 'batch' && <BatchPredict />}
 
       {activeTab === 'about' && (
         <div className="card" style={{ maxWidth: 680 }}>
@@ -162,6 +289,9 @@ export default function App() {
       <footer className="app-footer">
         IFT-SafePredict v1.0 | Sub-MARS-16t | Sup-MARS-35t |
         All computation is client-side — no data is transmitted.
+        <div style={{ marginTop: '0.75rem', fontSize: '0.65rem' }}>
+          <a href="/analytics" style={{ color: 'var(--color-border)', textDecoration: 'none' }}>admin</a>
+        </div>
       </footer>
     </div>
   )
