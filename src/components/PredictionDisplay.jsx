@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { Check, Link, Info } from 'lucide-react'
 import QualityBadge from './QualityBadge.jsx'
 import { exportCSV, exportPDF } from '../logic/exportEngine.js'
 import { buildShareUrl } from '../logic/tracking.js'
@@ -53,7 +54,7 @@ export default function PredictionDisplay({ result, inputs }) {
             }}
             title="Copy shareable link"
           >
-            {copied ? '✓ Copied' : '🔗 Share'}
+            {copied ? <><Check size={14} /> Copied</> : <><Link size={14} /> Share</>}
           </button>
         </div>
       </div>
@@ -99,7 +100,7 @@ export default function PredictionDisplay({ result, inputs }) {
             color: '#bfdbfe',
             lineHeight: 1.5,
           }}>
-            ℹ P50 clipped from {rawP50.toFixed(2)} → {p50.toFixed(2)} mN/m (dataset range 12.4–78.88).
+            <Info size={14} style={{ marginRight: 4, verticalAlign: 'middle' }} /> P50 clipped from {rawP50.toFixed(2)} → {p50.toFixed(2)} mN/m (dataset range 12.4–78.88).
           </div>
         )}
       </div>

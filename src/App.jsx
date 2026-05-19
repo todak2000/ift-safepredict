@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useEffect } from 'react'
+import { Sun, Moon } from 'lucide-react'
 import AnalyticsDashboard from './components/AnalyticsDashboard.jsx'
 import InputPanel from './components/InputPanel/InputPanel.jsx'
 import PredictionDisplay from './components/PredictionDisplay.jsx'
@@ -169,7 +170,7 @@ export default function App() {
             ))}
           </select>
           <button className="btn-ghost theme-toggle" onClick={toggleTheme} title="Toggle theme">
-            {theme === 'dark' ? '☀️' : '🌙'}
+            {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
           </button>
         </div>
       </header>

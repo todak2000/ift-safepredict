@@ -1,4 +1,5 @@
 import React from 'react'
+import { AlertTriangle } from 'lucide-react'
 import { computeDrho } from '../../logic/eosEngine.js'
 import { pToSI, tToSI, pFromSI, tFromSI, pMinMax, tMinMax, pLabel, tLabel } from '../../logic/units.js'
 import ReservoirPresets from '../ReservoirPresets.jsx'
@@ -24,7 +25,7 @@ function FieldRow({ label, unit, value, min, max, step, disabled, onChange, warn
       <div className="field-label">
         <span style={{ opacity: disabled ? 0.45 : 1 }}>
           {label}
-          {warning && <span className="validation-warn" title={warning}> ⚠</span>}
+          {warning && <span className="validation-warn" title={warning}><AlertTriangle size={14} style={{ marginLeft: 4 }} /></span>}
         </span>
         <span className="unit">{unit}</span>
       </div>
@@ -61,7 +62,7 @@ function isOutside(value, min, max) {
 export default function InputPanel({ inputs, regime, isNearCritical, unitSystem, onChange, onPredict, onReset, onPresetChange }) {
   const regimeClass = isNearCritical ? 'near' : regime
   const regimeLabel = isNearCritical
-    ? '⚠ Near-Critical'
+    ? 'Near-Critical'
     : regime === 'sup' ? 'Supercritical' : 'Subcritical'
 
   const mcmEnabled = !!MCM_ACTIVE[inputs.brineType]
@@ -116,7 +117,7 @@ export default function InputPanel({ inputs, regime, isNearCritical, unitSystem,
           <button className="btn-ghost" onClick={onReset} style={{ fontSize: '0.68rem', padding: '0.2rem 0.5rem' }} title="Reset inputs and clear URL">
             Reset
           </button>
-          <span className={`regime-badge ${regimeClass}`}>{regimeLabel}</span>
+          <span className={`regime-badge ${regimeClass}`}>{isNearCritical && <AlertTriangle size={12} style={{ marginRight: 2 }} />}{regimeLabel}</span>
         </div>
       </div>
 

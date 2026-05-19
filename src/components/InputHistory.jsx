@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { X, ChevronUp, ChevronDown } from 'lucide-react'
 import { getPredictions, deletePrediction, clearAllPredictions } from '../logic/db.js'
 
 export default function InputHistory({ onLoad }) {
@@ -34,7 +35,7 @@ export default function InputHistory({ onLoad }) {
         <span className="card-title" style={{ marginBottom: 0 }}>
           Input History ({history.length})
         </span>
-        <span style={{ color: '#94a3b8', fontSize: '0.8rem' }}>{open ? '▲' : '▼'}</span>
+        <span style={{ color: '#94a3b8', fontSize: '0.8rem', display: 'flex', alignItems: 'center' }}>{open ? <ChevronUp size={16} /> : <ChevronDown size={16} />}</span>
       </div>
 
       {open && (
@@ -67,7 +68,7 @@ export default function InputHistory({ onLoad }) {
                       onClick={(e) => { e.stopPropagation(); handleDelete(entry.id) }}
                       title="Delete"
                     >
-                      ✕
+                      <X size={14} />
                     </button>
                   </div>
                 ))}

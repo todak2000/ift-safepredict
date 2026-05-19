@@ -1,6 +1,24 @@
 import React, { useMemo, useRef, useEffect, useState, useCallback } from 'react'
 import { predict } from '../logic/predict.js'
 
+function useContainerWidth(ref) {
+  const [width, setWidth] = useState(
+    typeof window !== 'undefined' ? Math.min(window.innerWidth - 40, 540) : 540
+  )
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    const ro = new ResizeObserver(entries => {
+      for (const entry of entries) {
+        setWidth(Math.min(entry.contentRect.width, 540))
+      }
+    })
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [ref])
+  return width
+}
+
 const RES_X = 50
 const RES_Y = 35
 
@@ -51,6 +69,8 @@ export default function ContourMap({ inputs, onSelectPT }) {
   const [targetIFT, setTargetIFT] = useState(25)
   const [showInverse, setShowInverse] = useState(false)
   const [hovered, setHovered] = useState(null)
+  const wrapRef = useRef(null)
+  const containerW = useContainerWidth(wrapRef)
   const [size, setSize] = useState({ w: 540, h: 380 })
 
   const grid = useMemo(() => {
@@ -170,6 +190,10 @@ export default function ContourMap({ inputs, onSelectPT }) {
 
   }, [grid, size, showInverse, targetIFT, hovered, inputs, pMin, pMax, tMin, tMax])
 
+  useEffect(() => {
+    setSize({ w: containerW, h: Math.round(containerW * 380 / 540) })
+  }, [containerW])
+
   useEffect(() => { drawCanvas() }, [drawCanvas])
 
   const handleMouse = useCallback((e) => {
@@ -224,7 +248,7 @@ export default function ContourMap({ inputs, onSelectPT }) {
       </div>
 
       {/* Canvas */}
-      <div className="contour-canvas-wrap">
+      <div className="contour-canvas-wrap" ref={wrapRef}>
         <canvas
           ref={canvasRef}
           style={{ width: size.w, height: size.h, cursor: 'crosshair' }}

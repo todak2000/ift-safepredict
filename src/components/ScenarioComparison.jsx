@@ -1,4 +1,5 @@
 import React from 'react'
+import { X } from 'lucide-react'
 import { exportScenariosCSV } from '../logic/exportEngine.js'
 
 const STATUS_COLORS = { GREEN: '#22c55e', YELLOW: '#eab308', RED: '#ef4444' }
@@ -24,7 +25,7 @@ export default function ScenarioComparison({ scenarios, onRemove }) {
       <div className="scenario-grid">
         {scenarios.map((s, i) => (
           <div key={i} className="scenario-card">
-            <button className="remove-btn" onClick={() => onRemove(i)} title="Remove">✕</button>
+            <button className="remove-btn" onClick={() => onRemove(i)} title="Remove"><X size={14} /></button>
             <div className="scenario-label">Scenario {i + 1}</div>
             <div className="scenario-ift" style={{ color: STATUS_COLORS[s.result.status] }}>
               {s.result.p50.toFixed(1)}

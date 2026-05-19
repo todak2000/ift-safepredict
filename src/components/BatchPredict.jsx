@@ -1,4 +1,5 @@
 import React, { useState, useRef } from 'react'
+import { FileText, Upload } from 'lucide-react'
 import { parseCSV, batchPredict, exportBatchCSV, exportBatchJSON } from '../logic/batchPredict.js'
 
 const TEMPLATE_CSV = `P,T,salinity,MCM,BCM,x_CH4,x_N2,brineType
@@ -95,7 +96,7 @@ export default function BatchPredict() {
               style={{ display: 'none' }}
             />
             <button className="btn btn-secondary" onClick={() => fileRef.current.click()}>
-              {data ? `📄 ${data.length} rows loaded` : '📂 Upload CSV'}
+              {data ? <><FileText size={16} /> {data.length} rows loaded</> : <><Upload size={16} /> Upload CSV</>}
             </button>
             {data && (
               <span className="text-muted" style={{ marginLeft: '0.75rem', fontSize: '0.75rem' }}>

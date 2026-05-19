@@ -1,9 +1,10 @@
 import React from 'react'
+import { Check, AlertTriangle } from 'lucide-react'
 
 const LABELS = {
-  GREEN:  'GREEN ✓ Standard',
-  YELLOW: 'YELLOW ⚠ High Variation',
-  RED:    'RED ⚠ Extrapolation',
+  GREEN:  <>GREEN <Check size={14} /> Standard</>,
+  YELLOW: <>YELLOW <AlertTriangle size={14} /> High Variation</>,
+  RED:    <>RED <AlertTriangle size={14} /> Extrapolation</>,
 }
 
 export default function QualityBadge({ status, message, uif, violatingFeatures }) {

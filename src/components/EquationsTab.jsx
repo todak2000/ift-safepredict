@@ -48,8 +48,8 @@ function Section({ title, children }) {
           fontWeight: 700,
           letterSpacing: '0.08em',
           textTransform: 'uppercase',
-          color: '#3b82f6',
-          borderBottom: '1px solid #334155',
+          color: 'var(--color-primary)',
+          borderBottom: '1px solid var(--color-border)',
           paddingBottom: '0.4rem',
           marginBottom: '1rem',
         }}
@@ -66,18 +66,18 @@ function EqBlock({ label, latex, note }) {
   return (
     <div
       style={{
-        background: '#0f172a',
+        background: 'var(--color-surface-2)',
         borderRadius: 8,
         padding: '0.75rem 1rem',
         marginBottom: '0.75rem',
-        border: '1px solid #1e3a5f',
+        border: '1px solid var(--color-border)',
       }}
     >
       {label && (
         <div
           style={{
             fontSize: '0.7rem',
-            color: '#64748b',
+            color: 'var(--color-text-muted)',
             fontWeight: 600,
             marginBottom: '0.3rem',
             letterSpacing: '0.04em',
@@ -91,7 +91,7 @@ function EqBlock({ label, latex, note }) {
         <div
           style={{
             fontSize: '0.68rem',
-            color: '#64748b',
+            color: 'var(--color-text-muted)',
             marginTop: '0.3rem',
             fontStyle: 'italic',
             textAlign: 'center',
@@ -256,13 +256,13 @@ export default function EquationsTab() {
   const cellStyle = {
     padding: '0.3rem 0.6rem',
     fontSize: '0.72rem',
-    borderBottom: '1px solid #1e293b',
-    color: '#cbd5e1',
+    borderBottom: '1px solid var(--color-border)',
+    color: 'var(--color-text)',
   }
   const headStyle = {
     ...cellStyle,
-    color: '#94a3b8',
-    borderBottom: '1px solid #334155',
+    color: 'var(--color-text-muted)',
+    borderBottom: '1px solid var(--color-border)',
     fontWeight: 600,
   }
 
@@ -274,54 +274,49 @@ export default function EquationsTab() {
 
       {/* ── Section 1: Feature Scaling ── */}
       <Section title="1 · MinMax Feature Scaling">
-        <p style={{ fontSize: '0.78rem', color: '#94a3b8', marginBottom: '0.75rem', lineHeight: 1.6 }}>
+        <p style={{ fontSize: '0.78rem', color: 'var(--color-text-muted)', marginBottom: '0.75rem', lineHeight: 1.6 }}>
           All seven input features are independently scaled to{' '}
           <InlineMath latex="[-1,\;1]" /> before entering the MARS models.
         </p>
         <EqBlock label="MinMax scaling" latex={EQ_SCALING} />
 
         {/* bounds tables */}
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: '1fr 1fr',
-            gap: '1rem',
-            marginTop: '0.75rem',
-          }}
-        >
+        <div className="bounds-grid">
           {[
             { label: 'Subcritical bounds', rows: BOUNDS_SUB },
             { label: 'Supercritical bounds', rows: BOUNDS_SUP },
           ].map(({ label, rows }) => (
-            <div key={label}>
-              <div style={{ fontSize: '0.7rem', color: '#64748b', fontWeight: 600, marginBottom: '0.35rem' }}>
+            <div key={label} className="bounds-table-wrap">
+              <div style={{ fontSize: '0.7rem', color: 'var(--color-text-muted)', fontWeight: 600, marginBottom: '0.35rem' }}>
                 {label}
               </div>
-              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                <thead>
-                  <tr>
-                    {['Feature', 'Min', 'Max'].map(h => (
-                      <th key={h} style={{ ...headStyle, textAlign: 'left' }}>{h}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {rows.map(([feat, mn, mx]) => (
-                    <tr key={feat}>
-                      <td style={cellStyle}><InlineMath latex={feat} /></td>
-                      <td style={cellStyle}>{mn}</td>
-                      <td style={cellStyle}>{mx}</td>
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 220 }}>
+                  <thead>
+                    <tr>
+                      {['Feature', 'Min', 'Max'].map(h => (
+                        <th key={h} style={{ ...headStyle, textAlign: 'left' }}>{h}</th>
+                      ))}
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {rows.map(([feat, mn, mx]) => (
+                      <tr key={feat}>
+                        <td style={cellStyle}><InlineMath latex={feat} /></td>
+                        <td style={cellStyle}>{mn}</td>
+                        <td style={cellStyle}>{mx}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           ))}
         </div>
 
         {/* Variable legend */}
         <div style={{ marginTop: '1rem' }}>
-          <div style={{ fontSize: '0.7rem', color: '#64748b', fontWeight: 600, marginBottom: '0.35rem' }}>
+          <div style={{ fontSize: '0.7rem', color: 'var(--color-text-muted)', fontWeight: 600, marginBottom: '0.35rem' }}>
             Scaled variable notation used in MARS equations below
           </div>
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
@@ -347,13 +342,13 @@ export default function EquationsTab() {
 
       {/* ── Section 2: Regime Detection ── */}
       <Section title="2 · Kay's Mixing Rule & Regime Detection">
-        <p style={{ fontSize: '0.78rem', color: '#94a3b8', marginBottom: '0.75rem', lineHeight: 1.6 }}>
+        <p style={{ fontSize: '0.78rem', color: 'var(--color-text-muted)', marginBottom: '0.75rem', lineHeight: 1.6 }}>
           Pseudo-critical properties for the CO₂-rich gas mixture are computed via Kay's mixing
           rule, then used to classify the thermodynamic regime.
         </p>
         <EqBlock label="Kay's mixing rule" latex={EQ_KAYS} />
         <EqBlock label="Regime classification" latex={EQ_REGIME} />
-        <p style={{ fontSize: '0.72rem', color: '#64748b', marginTop: '0.5rem', lineHeight: 1.5 }}>
+        <p style={{ fontSize: '0.72rem', color: 'var(--color-text-muted)', marginTop: '0.5rem', lineHeight: 1.5 }}>
           Critical constants — CO₂: <InlineMath latex="P_c = 7.377\;\text{MPa},\;T_c = 304.13\;\text{K}" />{' '}
           · CH₄: <InlineMath latex="P_c = 4.600\;\text{MPa},\;T_c = 190.56\;\text{K}" />{' '}
           · N₂: <InlineMath latex="P_c = 3.390\;\text{MPa},\;T_c = 126.19\;\text{K}" />
@@ -362,13 +357,13 @@ export default function EquationsTab() {
 
       {/* ── Section 3: MARS Hinge Functions ── */}
       <Section title="3 · MARS Hinge Basis Functions">
-        <p style={{ fontSize: '0.78rem', color: '#94a3b8', marginBottom: '0.75rem', lineHeight: 1.6 }}>
+        <p style={{ fontSize: '0.78rem', color: 'var(--color-text-muted)', marginBottom: '0.75rem', lineHeight: 1.6 }}>
           Multivariate Adaptive Regression Splines (MARS) build models from paired hinge
           functions. <InlineMath latex="k" /> denotes the knot location in scaled feature space,
           and <InlineMath latex="u" /> is the scaled feature value.
         </p>
         <EqBlock label="Hinge function pair" latex={EQ_HINGE} />
-        <p style={{ fontSize: '0.72rem', color: '#64748b', lineHeight: 1.5 }}>
+        <p style={{ fontSize: '0.72rem', color: 'var(--color-text-muted)', lineHeight: 1.5 }}>
           Products of two hinge functions (interaction terms) capture non-linear feature
           interactions. All knots are located in <InlineMath latex="[-1,\;1]" />.
         </p>
@@ -376,7 +371,7 @@ export default function EquationsTab() {
 
       {/* ── Section 4: Subcritical MARS ── */}
       <Section title="4 · Subcritical MARS Model (Sub-MARS-16t)">
-        <p style={{ fontSize: '0.78rem', color: '#94a3b8', marginBottom: '0.75rem', lineHeight: 1.6 }}>
+        <p style={{ fontSize: '0.78rem', color: 'var(--color-text-muted)', marginBottom: '0.75rem', lineHeight: 1.6 }}>
           Applied when <InlineMath latex="P_r < 1" /> or <InlineMath latex="T_r < 1" />.
           Output <InlineMath latex="\hat{\gamma}_{\mathrm{sub}}" /> is in mN/m.
           Test nRMSE: 5.46 % · External validation nRMSE: 17.00 %.
@@ -390,39 +385,39 @@ export default function EquationsTab() {
 
       {/* ── Section 5: Supercritical MARS ── */}
       <Section title="5 · Supercritical MARS Model (Sup-MARS-35t)">
-        <p style={{ fontSize: '0.78rem', color: '#94a3b8', marginBottom: '0.75rem', lineHeight: 1.6 }}>
+        <p style={{ fontSize: '0.78rem', color: 'var(--color-text-muted)', marginBottom: '0.75rem', lineHeight: 1.6 }}>
           Applied when <InlineMath latex="P_r \geq 1" /> and <InlineMath latex="T_r \geq 1" />.
           Output <InlineMath latex="\hat{\gamma}_{\mathrm{sup}}" /> is in mN/m.
           Test nRMSE: 5.60 % · External validation nRMSE: 5.62 %.
         </p>
         <div
           style={{
-            background: '#0f172a',
+            background: 'var(--color-surface-2)',
             borderRadius: 8,
             padding: '0.75rem 1rem',
             marginBottom: '0.5rem',
-            border: '1px solid #1e3a5f',
+            border: '1px solid var(--color-border)',
           }}
         >
-          <div style={{ fontSize: '0.7rem', color: '#64748b', fontWeight: 600, marginBottom: '0.3rem' }}>
+          <div style={{ fontSize: '0.7rem', color: 'var(--color-text-muted)', fontWeight: 600, marginBottom: '0.3rem' }}>
             Supercritical MARS — terms 1–17 (continued below)
           </div>
           <BlockMath latex={EQ_SUP_MARS_A} />
         </div>
         <div
           style={{
-            background: '#0f172a',
+            background: 'var(--color-surface-2)',
             borderRadius: 8,
             padding: '0.75rem 1rem',
             marginBottom: '0.75rem',
-            border: '1px solid #1e3a5f',
+            border: '1px solid var(--color-border)',
           }}
         >
-          <div style={{ fontSize: '0.7rem', color: '#64748b', fontWeight: 600, marginBottom: '0.3rem' }}>
+          <div style={{ fontSize: '0.7rem', color: 'var(--color-text-muted)', fontWeight: 600, marginBottom: '0.3rem' }}>
             Supercritical MARS — terms 18–34
           </div>
           <BlockMath latex={EQ_SUP_MARS_B} />
-          <div style={{ fontSize: '0.68rem', color: '#64748b', marginTop: '0.3rem', fontStyle: 'italic', textAlign: 'center' }}>
+          <div style={{ fontSize: '0.68rem', color: 'var(--color-text-muted)', marginTop: '0.3rem', fontStyle: 'italic', textAlign: 'center' }}>
             All 35 terms (intercept + 34 active) from <InlineMath latex="global\_sup\_mars\_equation.json" />.
           </div>
         </div>
@@ -430,7 +425,7 @@ export default function EquationsTab() {
 
       {/* ── Section 6: Uncertainty Quantification ── */}
       <Section title="6 · Conformal Prediction & Uncertainty Quantification">
-        <p style={{ fontSize: '0.78rem', color: '#94a3b8', marginBottom: '0.75rem', lineHeight: 1.6 }}>
+        <p style={{ fontSize: '0.78rem', color: 'var(--color-text-muted)', marginBottom: '0.75rem', lineHeight: 1.6 }}>
           80 % conformal prediction intervals are computed from the MARS point estimate
           <InlineMath latex="\hat{\gamma}_{P_{50}}" /> by scaling a regime-specific
           base half-width by the Uncertainty Interval Factor (UIF){' '}
@@ -441,7 +436,7 @@ export default function EquationsTab() {
 
       {/* ── Section 7: EOS Density Correlations ── */}
       <Section title="7 · Density Estimation (EOS Assist Panel)">
-        <p style={{ fontSize: '0.78rem', color: '#94a3b8', marginBottom: '0.75rem', lineHeight: 1.6 }}>
+        <p style={{ fontSize: '0.78rem', color: 'var(--color-text-muted)', marginBottom: '0.75rem', lineHeight: 1.6 }}>
           When <InlineMath latex="\Delta\rho" /> is estimated via the EOS Assist panel, CO₂
           density uses the Pitzer–Curl virial equation (gas phase) or a polynomial fit (dense
           phase), and brine density uses the Rowe-Chou (1970) correlation.
