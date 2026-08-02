@@ -2,12 +2,12 @@ import React from 'react'
 import { Check, AlertTriangle } from 'lucide-react'
 
 const LABELS = {
-  GREEN:  <>GREEN <Check size={14} /> Standard</>,
-  YELLOW: <>YELLOW <AlertTriangle size={14} /> High Variation</>,
-  RED:    <>RED <AlertTriangle size={14} /> Extrapolation</>,
+  GREEN: <>GREEN <Check size={14} /> In Domain</>,
+  AMBER: <>AMBER <AlertTriangle size={14} /> Graduated Extrapolation</>,
+  RED:   <>RED <AlertTriangle size={14} /> Strong Extrapolation</>,
 }
 
-export default function QualityBadge({ status, message, uif, violatingFeatures }) {
+export default function QualityBadge({ status, message, uif, h, hStar }) {
   if (!status) return null
 
   return (
@@ -21,9 +21,9 @@ export default function QualityBadge({ status, message, uif, violatingFeatures }
             UIF = {uif} — interval widened by {uif}×
           </div>
         )}
-        {violatingFeatures?.length > 0 && (
+        {h !== undefined && hStar !== undefined && (
           <div style={{ fontSize: '0.7rem', marginTop: '0.2rem', opacity: 0.7 }}>
-            Out-of-domain: {violatingFeatures.join(', ')}
+            Leverage h = {h.toFixed(4)} | h* = {hStar.toFixed(4)}
           </div>
         )}
       </div>

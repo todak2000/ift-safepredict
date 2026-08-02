@@ -6,8 +6,8 @@ const FIELDS = [
   { key: 'drho',  label: 'Density diff (Δρ)',     unit: 'g/cm³',   min: 0.001, max: 1.1, step: 0.001 },
   { key: 'MCM',   label: 'Monovalent Cation Mol.', unit: 'mol/kg', min: 0,    max: 6,    step: 0.05 },
   { key: 'BCM',   label: 'Bivalent Cation Mol.',  unit: 'mol/kg',  min: 0,    max: 2,    step: 0.01 },
-  { key: 'x_CH4', label: 'CH₄ mole fraction',     unit: 'mol/mol', min: 0,    max: 0.35, step: 0.005 },
-  { key: 'x_N2',  label: 'N₂ mole fraction',      unit: 'mol/mol', min: 0,    max: 0.25, step: 0.005 },
+  { key: 'x_CH4', label: 'CH₄ mole fraction',     unit: 'mol/mol', min: 0,    max: 0.890, step: 0.005 },
+  { key: 'x_N2',  label: 'N₂ mole fraction',      unit: 'mol/mol', min: 0,    max: 0.7636, step: 0.005 },
 ]
 
 export default function PrimaryInputs({ values, onChange }) {

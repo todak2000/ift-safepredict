@@ -6,8 +6,8 @@
 
 const MODEL_VERSION = 'IFT-SafePredict v1.0 | Sub-MARS-16t | Sup-MARS-35t';
 const CITATION =
-  'Olagunju, D. et al. (2026). CO₂-Brine Interfacial Tension Prediction via ' +
-  'Dual-Regime MARS Models with Conformal Uncertainty Quantification.';
+  'Olagunju, D. et al. (2026). Closed-Form MARS Equations with Calibrated Conformal Uncertainty for ' +
+  'CO₂–Brine Interfacial Tension Prediction in Geological Carbon Storage.';
 
 /**
  * Format a prediction result object into a plain-text summary.
@@ -126,7 +126,7 @@ export const exportPDF = async (inputs, result, regime) => {
   doc.setTextColor(0, 0, 0);
 
   // QA status badge
-  const statusColors = { GREEN: [34, 197, 94], YELLOW: [234, 179, 8], RED: [239, 68, 68] };
+  const statusColors = { GREEN: [34, 197, 94], AMBER: [234, 179, 8], RED: [239, 68, 68] };
   const [r, g, b] = statusColors[result.status] || [150, 150, 150];
   doc.setFillColor(r, g, b);
   doc.roundedRect(60, 33, 30, 7, 2, 2, 'F');
@@ -140,8 +140,8 @@ export const exportPDF = async (inputs, result, regime) => {
     head: [['Result', 'Value', 'Unit']],
     body: [
       ['IFT P50', result.p50.toFixed(2), 'mN/m'],
-      ['IFT P10 (80% CI lower)', result.p10.toFixed(2), 'mN/m'],
-      ['IFT P90 (80% CI upper)', result.p90.toFixed(2), 'mN/m'],
+      ['IFT P10 (optimistic / high IFT)', result.p10.toFixed(2), 'mN/m'],
+      ['IFT P90 (conservative / low IFT)', result.p90.toFixed(2), 'mN/m'],
       ['UIF Factor', String(result.uif), ''],
       ['QA Message', result.message, ''],
     ],

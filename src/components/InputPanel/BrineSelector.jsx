@@ -23,7 +23,7 @@ export default function BrineSelector({ value, onChange }) {
       </select>
       {value === 'Na2SO4' && (
         <p className="text-muted mt-1">
-          Na₂SO₄ activates YELLOW QA — +11% apparatus bias known from Li et al. (2012).
+          Na₂SO₄ note: +13.51% apparatus bias detected from Li et al. (2012); noted in QA message.
         </p>
       )}
     </div>

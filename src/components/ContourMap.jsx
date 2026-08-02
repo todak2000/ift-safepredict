@@ -101,7 +101,7 @@ export default function ContourMap({ inputs, onSelectPT }) {
     const cellW = w / RES_X
     const cellH = h / RES_Y
     const critP = 7.377
-    const critT = 304.13
+    const critT = 304.28
 
     let minIft = Infinity, maxIft = -Infinity
     grid.data.forEach(d => { if (d.ift < minIft) minIft = d.ift; if (d.ift > maxIft) maxIft = d.ift })
@@ -125,7 +125,7 @@ export default function ContourMap({ inputs, onSelectPT }) {
 
     const totalTO2 = inputs.x_CH4 + inputs.x_N2
     const pcMix = (1 - totalTO2) * 7.377 + inputs.x_CH4 * 4.600 + inputs.x_N2 * 3.390
-    const tcMix = (1 - totalTO2) * 304.13 + inputs.x_CH4 * 190.56 + inputs.x_N2 * 126.19
+    const tcMix = (1 - totalTO2) * 304.28 + inputs.x_CH4 * 190.56 + inputs.x_N2 * 126.19
     const supP = 1 * pcMix
     const supT = 1 * tcMix
 

@@ -13,7 +13,7 @@
  */
 
 // CO₂ pure-component constants
-const CO2_TC  = 304.13;   // K
+const CO2_TC  = 304.28;   // K
 const CO2_PC  = 7.377;    // MPa
 const CO2_M   = 0.04401;  // kg/mol
 const R_GAS   = 8.314;    // J/(mol·K)

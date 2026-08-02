@@ -16,7 +16,7 @@ import { calculateP10P90 } from './qaValidator.js';
 
 // Pure-component critical constants
 const Pc = { CO2: 7.377, CH4: 4.600, N2: 3.390 }; // MPa
-const Tc = { CO2: 304.13, CH4: 190.56, N2: 126.19 }; // K
+const Tc = { CO2: 304.28, CH4: 190.56, N2: 126.19 }; // K
 
 /**
  * Kay's mixing rule for Pc_mix and Tc_mix.
@@ -39,13 +39,14 @@ const kaysMixing = (x_CH4, x_N2) => {
  */
 export const detectRegime = (Pr, Tr) => {
   const supercritical = Pr >= 1.0 && Tr >= 1.0;
-  const subcritical   = Pr <  1.0 || Tr <  1.0;
 
-  // Near-critical: within 2% of critical on both axes
+  // Near-critical: Pr or Tr within 2% of 1.0 (documented tool rule,
+  // paper4 §5.1; routes to the subcritical MARS model with an
+  // indicative-only warning)
   const nearCritical =
     Math.abs(Pr - 1.0) < 0.02 || Math.abs(Tr - 1.0) < 0.02;
 
-  if (nearCritical && (Pr >= 0.98) && (Tr >= 0.98)) {
+  if (nearCritical) {
     return { regime: 'sub', isNearCritical: true };
   }
   return { regime: supercritical ? 'sup' : 'sub', isNearCritical: false };
@@ -72,7 +73,7 @@ export const detectRegime = (Pr, Tr) => {
  *   Pr: number, Tr: number, drho_sq: number,
  *   p10: number, p50: number, p90: number,
  *   status: string, message: string, uif: number,
- *   violatingFeatures: string[],
+ *   h: number, hStar: number, liEtAlFlag: boolean,
  * }}
  */
 export const predict = (userInputs) => {
@@ -108,12 +109,12 @@ export const predict = (userInputs) => {
     ? marsSupercritical(scaled)
     : marsSubcritical(scaled);
 
-  const p50 = rawP50;
-  const p50Clipped = false;
+  const p50 = Math.max(12.4, Math.min(78.88, rawP50));
+  const p50Clipped = p50 !== rawP50;
 
   // 7. QA / UIF
   const qaInputs = { ...features, brineType, eosEstimated };
-  const qaResult = calculateP10P90(p50, qaInputs, regime);
+  const qaResult = calculateP10P90(p50, qaInputs, scaled, regime);
 
   return {
     regime,

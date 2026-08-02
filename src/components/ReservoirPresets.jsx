@@ -3,55 +3,55 @@ import React from 'react'
 const PRESETS = [
   {
     label: 'Sleipner (Utsira Fm, North Sea)',
-    P: 10, T: 310, salinity: 3.5, MCM: 3.5, BCM: 0, x_CH4: 0, x_N2: 0, brineType: 'NaCl',
+    P: 10.3, T: 310.15, salinity: 3.5, MCM: 0.60, BCM: 0, x_CH4: 0, x_N2: 0, brineType: 'NaCl', drho: 0.3916,
   },
   {
     label: 'Snøhvit (Tubåen Fm, Barents Sea)',
-    P: 28, T: 370, salinity: 4.0, MCM: 4.0, BCM: 0, x_CH4: 0.02, x_N2: 0.01, brineType: 'NaCl',
+    P: 28, T: 370, salinity: 4.0, MCM: 4.0, BCM: 0, x_CH4: 0.02, x_N2: 0.01, brineType: 'NaCl', drho: 0.40,
   },
   {
     label: 'In Salah (Krechba Fm, Algeria)',
-    P: 18, T: 350, salinity: 2.5, MCM: 2.5, BCM: 0, x_CH4: 0, x_N2: 0, brineType: 'NaCl',
+    P: 18, T: 363.15, salinity: 2.5, MCM: 0.0, BCM: 0, x_CH4: 0, x_N2: 0, brineType: 'NaCl', drho: 0.40,
   },
   {
     label: 'Quest (Alberta Basin, Canada)',
-    P: 15, T: 330, salinity: 3.0, MCM: 3.0, BCM: 0, x_CH4: 0.01, x_N2: 0, brineType: 'NaCl',
+    P: 15, T: 330, salinity: 3.0, MCM: 3.0, BCM: 0, x_CH4: 0.01, x_N2: 0, brineType: 'NaCl', drho: 0.40,
   },
   {
     label: 'Gorgon (Barrow Island, Australia)',
-    P: 22, T: 360, salinity: 3.5, MCM: 3.5, BCM: 0, x_CH4: 0, x_N2: 0, brineType: 'NaCl',
+    P: 22, T: 360, salinity: 3.5, MCM: 3.5, BCM: 0, x_CH4: 0, x_N2: 0, brineType: 'NaCl', drho: 0.40,
   },
   {
     label: 'Illinois Basin Decatur (USA)',
-    P: 20, T: 320, salinity: 4.5, MCM: 4.5, BCM: 0, x_CH4: 0, x_N2: 0, brineType: 'NaCl',
+    P: 20, T: 320, salinity: 4.5, MCM: 4.5, BCM: 0, x_CH4: 0, x_N2: 0, brineType: 'NaCl', drho: 0.40,
   },
   {
     label: 'Tomakomai (Japan)',
-    P: 12, T: 340, salinity: 3.0, MCM: 3.0, BCM: 0, x_CH4: 0, x_N2: 0, brineType: 'NaCl',
+    P: 12, T: 340, salinity: 3.0, MCM: 3.0, BCM: 0, x_CH4: 0, x_N2: 0, brineType: 'NaCl', drho: 0.40,
   },
   {
     label: 'Typical Saline Aquifer',
-    P: 15, T: 330, salinity: 3.0, MCM: 2.0, BCM: 1.0, x_CH4: 0, x_N2: 0, brineType: 'NaCl+CaCl2',
+    P: 15, T: 330, salinity: 3.0, MCM: 2.0, BCM: 1.0, x_CH4: 0, x_N2: 0, brineType: 'NaCl+CaCl2', drho: 0.40,
   },
   {
     label: 'Deep Saline Aquifer',
-    P: 30, T: 370, salinity: 4.0, MCM: 3.0, BCM: 1.0, x_CH4: 0.01, x_N2: 0, brineType: 'NaCl+CaCl2',
+    P: 30, T: 370, salinity: 4.0, MCM: 3.0, BCM: 1.0, x_CH4: 0.01, x_N2: 0, brineType: 'NaCl+CaCl2', drho: 0.40,
   },
   {
     label: 'Depleted Gas Reservoir',
-    P: 8, T: 320, salinity: 2.0, MCM: 1.5, BCM: 0.5, x_CH4: 0.15, x_N2: 0.05, brineType: 'NaCl+CaCl2',
+    P: 8, T: 320, salinity: 2.0, MCM: 1.5, BCM: 0.5, x_CH4: 0.15, x_N2: 0.05, brineType: 'NaCl+CaCl2', drho: 0.40,
   },
   {
     label: 'High-Pressure Saline (Offshore)',
-    P: 45, T: 390, salinity: 5.0, MCM: 4.0, BCM: 1.0, x_CH4: 0, x_N2: 0, brineType: 'NaCl',
+    P: 45, T: 390, salinity: 5.0, MCM: 4.0, BCM: 1.0, x_CH4: 0, x_N2: 0, brineType: 'NaCl', drho: 0.40,
   },
   {
     label: 'Carbonate Reservoir (Middle East)',
-    P: 25, T: 380, salinity: 4.5, MCM: 3.0, BCM: 1.5, x_CH4: 0.05, x_N2: 0, brineType: 'NaCl+CaCl2',
+    P: 25, T: 380, salinity: 4.5, MCM: 3.0, BCM: 1.5, x_CH4: 0.05, x_N2: 0, brineType: 'NaCl+CaCl2', drho: 0.40,
   },
   {
     label: 'Pure Water (Lab Reference)',
-    P: 10, T: 298, salinity: 0, MCM: 0, BCM: 0, x_CH4: 0, x_N2: 0, brineType: 'Water',
+    P: 10, T: 298, salinity: 0, MCM: 0, BCM: 0, x_CH4: 0, x_N2: 0, brineType: 'Water', drho: 0.40,
   },
 ]
 
@@ -66,7 +66,7 @@ export default function ReservoirPresets({ onSelect, activePreset }) {
         value={activePreset || ''}
         onChange={e => {
           const preset = PRESETS.find(p => p.label === e.target.value)
-          if (preset) onSelect({ ...preset, presetName: preset.label, drho: 0.40, eosEstimated: true })
+          if (preset) onSelect({ ...preset, presetName: preset.label, eosEstimated: true })
           e.target.value = activePreset || ''
         }}
       >

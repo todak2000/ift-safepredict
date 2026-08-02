@@ -10,7 +10,7 @@ ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Filler, 
 
 const STATUS_COLORS = {
   GREEN:  'rgba(34, 197, 94,',
-  YELLOW: 'rgba(234, 179, 8,',
+  AMBER:  'rgba(234, 179, 8,',
   RED:    'rgba(239, 68, 68,',
 }
 
@@ -30,8 +30,8 @@ export default function UncertaintyChart({ result, history }) {
       labels,
       datasets: [
         {
-          label: 'P90 (upper)',
-          data: p90s,
+          label: 'P10 (upper)',
+          data: p10s,
           fill: '+1',
           borderColor: `${colorBase}0)`,
           backgroundColor: `${colorBase}0.12)`,
@@ -49,8 +49,8 @@ export default function UncertaintyChart({ result, history }) {
           pointHoverRadius: 6,
         },
         {
-          label: 'P10 (lower)',
-          data: p10s,
+          label: 'P90 (lower)',
+          data: p90s,
           fill: '-1',
           borderColor: `${colorBase}0)`,
           backgroundColor: `${colorBase}0.12)`,

@@ -11,6 +11,7 @@ import BatchPredict from './components/BatchPredict.jsx'
 import SensitivityChart from './components/SensitivityChart.jsx'
 import ContourMap from './components/ContourMap.jsx'
 import StorageEstimator from './components/StorageEstimator.jsx'
+import CapillaryHeightCalculator from './components/CapillaryHeightCalculator.jsx'
 import { predict, detectRegime } from './logic/predict.js'
 import { savePrediction } from './logic/db.js'
 import { decodeHash, trackPageView, trackPageExit, encodeInputs } from './logic/tracking.js'
@@ -43,7 +44,7 @@ const UNIT_OPTIONS = [
 const liveRegime = (inputs) => {
   const x_CO2 = 1 - inputs.x_CH4 - inputs.x_N2
   const Pc_mix = x_CO2 * 7.377 + inputs.x_CH4 * 4.600 + inputs.x_N2 * 3.390
-  const Tc_mix = x_CO2 * 304.13 + inputs.x_CH4 * 190.56 + inputs.x_N2 * 126.19
+  const Tc_mix = x_CO2 * 304.28 + inputs.x_CH4 * 190.56 + inputs.x_N2 * 126.19
   const Pr = inputs.P / Pc_mix
   const Tr = inputs.T / Tc_mix
   return detectRegime(Pr, Tr)
@@ -219,6 +220,7 @@ export default function App() {
               <UncertaintyChart result={result} history={history} />
               {result && <SensitivityChart inputs={inputs} />}
               {result && <StorageEstimator result={result} />}
+              {result && <CapillaryHeightCalculator result={result} />}
               <InputHistory onLoad={setInputs} />
             </div>
           </div>
@@ -261,8 +263,8 @@ export default function App() {
               <tr style={{ borderBottom: '1px solid #1e293b' }}>
                 <td style={{ padding: '0.3rem 0.5rem' }}>Subcritical</td>
                 <td style={{ padding: '0.3rem 0.5rem' }}>MARS 16-term</td>
-                <td style={{ padding: '0.3rem 0.5rem' }}>5.46%</td>
-                <td style={{ padding: '0.3rem 0.5rem' }}>17.00%</td>
+                <td style={{ padding: '0.3rem 0.5rem' }}>5.95%</td>
+                <td style={{ padding: '0.3rem 0.5rem' }}>18.11%</td>
               </tr>
               <tr>
                 <td style={{ padding: '0.3rem 0.5rem' }}>Supercritical</td>
@@ -274,8 +276,10 @@ export default function App() {
           </table>
           <h3 style={{ fontSize: '0.82rem', fontWeight: 700, margin: '1rem 0 0.5rem' }}>UQ Framework</h3>
           <p style={{ fontSize: '0.78rem', lineHeight: 1.7, marginBottom: '0.5rem' }}>
-            80% conformal prediction intervals. Base half-width: ±2.44 mN/m (sub), ±2.25 mN/m (sup).
-            UIF escalation: 3.41× for Na₂SO₄ / high-MCM conditions; 5.0× for extrapolation.
+            80% conformal prediction intervals. Base half-width: ±2.6928 mN/m (sub), ±2.25 mN/m (sup).
+            Applicability domain assessed via Williams-Plot hat-matrix leverage (thesis §3.12.2):
+            GREEN (h ≤ h*): UIF = 1.0; AMBER (h* &lt; h ≤ 3h*): UIF = UIFinterval (3.59× sub, 1.06× sup);
+            RED (h &gt; 3h*): UIF = 5.0 (~95% PI). Thresholds: h* = 0.0342 (sub), 0.0233 (sup).
           </p>
           <h3 style={{ fontSize: '0.82rem', fontWeight: 700, margin: '1rem 0 0.5rem' }}>Citation</h3>
           <p style={{ fontSize: '0.78rem', color: '#94a3b8', fontStyle: 'italic' }}>

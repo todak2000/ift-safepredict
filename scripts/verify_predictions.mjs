@@ -108,7 +108,7 @@ for (const sc of SCENARIOS) {
   console.log(`  Regime: ${res.regime}${res.isNearCritical ? ' (near-critical)' : ''}`);
   console.log(`  P50=${res.p50.toFixed(4)} mN/m, PI=[${res.p10.toFixed(4)}, ${res.p90.toFixed(4)}]`);
   console.log(`  True IFT=${sc.trueIFT}, Error=${err.toFixed(4)} mN/m (${pctErr.toFixed(2)}%)`);
-  console.log(`  QA: ${res.status} (UIF=${res.uif})${res.violatingFeatures.length ? ', violations: '+res.violatingFeatures.join(',') : ''}`);
+  console.log(`  QA: ${res.status} (UIF=${res.uif}, h=${res.h.toFixed(4)}/h*=${res.hStar.toFixed(4)})${res.liEtAlFlag ? ', Li-et-al bias flag' : ''}`);
 
   if (res.regime === 'sub') { subCount++; subRMSE += err * err; }
   else { supCount++; supRMSE += err * err; }
@@ -142,7 +142,7 @@ for (const sc of [SCENARIOS[0], SCENARIOS[4], SCENARIOS[5], SCENARIOS[7]]) {
 
   const { Pc_mix, Tc_mix } = (() => {
     const Pc = { CO2: 7.377, CH4: 4.600, N2: 3.390 };
-    const Tc = { CO2: 304.13, CH4: 190.56, N2: 126.19 };
+    const Tc = { CO2: 304.28, CH4: 190.56, N2: 126.19 };
     const x_CO2 = 1 - inputs.x_CH4 - inputs.x_N2;
     return {
       Pc_mix: x_CO2 * Pc.CO2 + inputs.x_CH4 * Pc.CH4 + inputs.x_N2 * Pc.N2,

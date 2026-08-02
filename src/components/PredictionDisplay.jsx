@@ -25,7 +25,7 @@ export default function PredictionDisplay({ result, inputs }) {
     )
   }
 
-  const { p10, p50, p90, status, message, uif, violatingFeatures, regime, Pr, Tr, drho_sq,
+  const { p10, p50, p90, status, message, uif, h, hStar, regime, Pr, Tr, drho_sq,
           eosEstimated, p50Clipped, rawP50 } = result
 
   const fullInputs = {
@@ -109,7 +109,8 @@ export default function PredictionDisplay({ result, inputs }) {
         status={status}
         message={message}
         uif={uif}
-        violatingFeatures={violatingFeatures}
+        h={h}
+        hStar={hStar}
       />
 
       <div className="text-muted mt-2" style={{ fontSize: '0.72rem' }}>

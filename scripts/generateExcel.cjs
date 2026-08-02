@@ -165,7 +165,7 @@ function buildMarsSheet(ws) {
   // ─ Section: Internal derivations (from INPUT sheet named ranges) ─
   addSection('§1 — Internal Derivations (from INPUT sheet)');
   addRow('Pc_mix (MPa)',   "=INPUT!B7*4.6 + INPUT!B8*3.39 + (1-INPUT!B7-INPUT!B8)*7.377");
-  addRow('Tc_mix (K)',     "=INPUT!B7*190.56 + INPUT!B8*126.19 + (1-INPUT!B7-INPUT!B8)*304.13");
+  addRow('Tc_mix (K)',     "=INPUT!B7*190.56 + INPUT!B8*126.19 + (1-INPUT!B7-INPUT!B8)*304.28");
   const prRow  = ws.lastRow.number + 1;
   addRow('Pr',             `=INPUT!B2/MARS_ENGINE!B${prRow-1}`);   // Pr = P/Pc_mix
   const trRow  = ws.lastRow.number + 1;
@@ -395,7 +395,7 @@ function buildInputSheet(ws, wb) {
   // Pc_mix, Tc_mix, Pr, Tr, drho_sq, regime
   const derRows = [
     ['Pc_mix (MPa)',   '=B7*4.600 + B8*3.390 + (1-B7-B8)*7.377',           '',      'Kay\'s mixing rule'],
-    ['Tc_mix (K)',     '=B3_ref*0 + B7*190.56 + B8*126.19 + (1-B7-B8)*304.13','',  'Kay\'s mixing rule'],
+    ['Tc_mix (K)',     '=B3_ref*0 + B7*190.56 + B8*126.19 + (1-B7-B8)*304.28','',  'Kay\'s mixing rule'],
     ['Pr',            '',                                                     '',      '= P / Pc_mix'],
     ['Tr',            '',                                                     '',      '= T / Tc_mix'],
     ['Δρ² (drho_sq)', '=B4^2',                                               '',      'Squared density difference'],
@@ -410,7 +410,7 @@ function buildInputSheet(ws, wb) {
   pcRow.eachCell(c => { c.border = border('thin'); });
   pcRow.getCell(2).fill = fill(C.rowAlt);
 
-  const tcRow = ws.addRow(['Tc_mix (K)', '=B7*190.56+B8*126.19+(1-B7-B8)*304.13', '', "Kay's mixing rule"]);
+  const tcRow = ws.addRow(['Tc_mix (K)', '=B7*190.56+B8*126.19+(1-B7-B8)*304.28', '', "Kay's mixing rule"]);
   tcRow.eachCell(c => { c.border = border('thin'); });
   tcRow.getCell(2).fill = fill(C.rowAlt);
 
@@ -477,7 +477,7 @@ function buildInputSheet(ws, wb) {
   uifRow.getCell(2).numFmt = '0.00';
   const uifRowNum = uifRow.number;
 
-  const qBase = `IF(B${regimeRowNum}="Subcritical",2.44,2.25)`;
+  const qBase = `IF(B${regimeRowNum}="Subcritical",2.6928,2.25)`;
 
   const p10Row = ws.addRow([
     'IFT P10 — 80% CI lower (mN/m)',
@@ -593,19 +593,19 @@ function buildInstructionsSheet(ws) {
   ws.addRow([]);
   h2('§3  QA Status interpretation');
   p('GREEN ✓   : Input within validated training domain. Standard uncertainty (UIF=1.0).');
-  p('YELLOW ⚠  : Na₂SO₄ brine or MCM > 2.5 mol/kg. Li et al. (2012) apparatus offset (+11%). UIF=3.41.');
+  p('YELLOW ⚠  : Na₂SO₄ brine or MCM > 2.5 mol/kg. Li et al. (2012) apparatus offset (+13.51%). UIF=3.41.');
   p('RED ⚠     : One or more inputs outside training domain bounds. Extrapolation. UIF=5.0. Use with caution.');
   ws.addRow([]);
   h2('§4  Model training summary');
   p('Dataset    : 3,265 CO₂-Brine IFT measurements (1,400 subcritical + 1,865 supercritical), 16 laboratories.');
-  p('Subcritical: MARS 16-term (compliance-fixed). Test nRMSE=5.46%, R²=0.939. Features: Pr, Tr, Δρ², x_CH₄, CH4_bin.');
+  p('Subcritical: MARS 16-term (compliance-fixed). Test nRMSE=5.95%, R²=0.939. Features: Pr, Tr, Δρ², x_CH₄, CH4_bin.');
   p('Supercritical: MARS 35-term. Test nRMSE=5.60%, R²=0.928. Features: all 10 (Pr,Tr,MCM,BCM,x_CH₄,x_N₂,Δρ²,BCM_bin,CH4_bin,N2_bin).');
-  p('UQ: 80% conformal prediction intervals. Base half-width ±2.44 mN/m (sub), ±2.25 mN/m (sup).');
+  p('UQ: 80% conformal prediction intervals. Base half-width ±2.6928 mN/m (sub), ±2.25 mN/m (sup).');
   p('P10/P90 clamped at physical limits: floor 12.4 mN/m, cap 78.88 mN/m.');
   ws.addRow([]);
   h2('§5  Citation');
-  p('Olagunju, D. et al. (2026). CO₂-Brine Interfacial Tension Prediction via Dual-Regime MARS Models');
-  p('with Conformal Uncertainty Quantification. [Journal TBD].');
+  p('Olagunju, D. et al. (2026). Closed-Form MARS Equations with Calibrated Conformal Uncertainty for');
+  p('CO₂-Brine Interfacial Tension Prediction in Geological Carbon Storage.');
   ws.addRow([]);
   h2('§6  Disclaimer');
   p('This tool is provided for research and engineering screening purposes only. Predictions carry inherent');

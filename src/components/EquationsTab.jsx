@@ -142,7 +142,7 @@ const EQ_SCALING = `\\tilde{x}_i = 2 \\cdot \\frac{x_i - x_i^{\\min}}{x_i^{\\max
 const EQ_KAYS = `\\begin{aligned}
 x_{\\mathrm{CO}_2} &= 1 - x_{\\mathrm{CH}_4} - x_{\\mathrm{N}_2} \\\\[6pt]
 P_{c,\\mathrm{mix}} &= 7.377\\,x_{\\mathrm{CO}_2} + 4.600\\,x_{\\mathrm{CH}_4} + 3.390\\,x_{\\mathrm{N}_2} \\quad [\\text{MPa}] \\\\[6pt]
-T_{c,\\mathrm{mix}} &= 304.13\\,x_{\\mathrm{CO}_2} + 190.56\\,x_{\\mathrm{CH}_4} + 126.19\\,x_{\\mathrm{N}_2} \\quad [\\text{K}] \\\\[6pt]
+T_{c,\\mathrm{mix}} &= 304.28\\,x_{\\mathrm{CO}_2} + 190.56\\,x_{\\mathrm{CH}_4} + 126.19\\,x_{\\mathrm{N}_2} \\quad [\\text{K}] \\\\[6pt]
 P_r &= \\frac{P}{P_{c,\\mathrm{mix}}}, \\qquad T_r = \\frac{T}{T_{c,\\mathrm{mix}}}
 \\end{aligned}`
 
@@ -222,13 +222,13 @@ const EQ_UQ = `\\begin{aligned}
 \\hat{\\gamma}_{P_{10}} &= \\hat{\\gamma}_{P_{50}} - \\delta_{\\mathrm{base}} \\cdot \\psi \\\\[6pt]
 \\hat{\\gamma}_{P_{90}} &= \\hat{\\gamma}_{P_{50}} + \\delta_{\\mathrm{base}} \\cdot \\psi \\\\[8pt]
 \\delta_{\\mathrm{base}} &= \\begin{cases}
-  2.44\\;\\text{mN/m} & \\text{(subcritical)} \\\\
+  2.6928\\;\\text{mN/m} & \\text{(subcritical)} \\\\
   2.25\\;\\text{mN/m} & \\text{(supercritical)}
 \\end{cases} \\\\[8pt]
 \\psi &= \\begin{cases}
-  1.00 & \\text{GREEN — within domain, standard conditions} \\\\
-  3.41 & \\text{YELLOW — Na}_2\\text{SO}_4\\text{ or MCM} > 2.5\\;\\text{mol/kg} \\\\
-  5.00 & \\text{RED — extrapolation (outside training domain)}
+  1.00 & \\text{GREEN} \\quad h \\le h^* \\\\
+  \\psi_{\\mathrm{UIF}} & \\text{AMBER} \\quad h^* < h \\le 3h^*\\;(\\psi_{\\mathrm{UIF}} = 3.59\\;\\text{sub},\\;1.06\\;\\text{sup}) \\\\
+  5.00 & \\text{RED} \\quad h > 3h^*
 \\end{cases}
 \\end{aligned}`
 
@@ -349,7 +349,7 @@ export default function EquationsTab() {
         <EqBlock label="Kay's mixing rule" latex={EQ_KAYS} />
         <EqBlock label="Regime classification" latex={EQ_REGIME} />
         <p style={{ fontSize: '0.72rem', color: 'var(--color-text-muted)', marginTop: '0.5rem', lineHeight: 1.5 }}>
-          Critical constants — CO₂: <InlineMath latex="P_c = 7.377\;\text{MPa},\;T_c = 304.13\;\text{K}" />{' '}
+          Critical constants — CO₂: <InlineMath latex="P_c = 7.377\;\text{MPa},\;T_c = 304.28\;\text{K}" />{' '}
           · CH₄: <InlineMath latex="P_c = 4.600\;\text{MPa},\;T_c = 190.56\;\text{K}" />{' '}
           · N₂: <InlineMath latex="P_c = 3.390\;\text{MPa},\;T_c = 126.19\;\text{K}" />
         </p>
@@ -374,7 +374,7 @@ export default function EquationsTab() {
         <p style={{ fontSize: '0.78rem', color: 'var(--color-text-muted)', marginBottom: '0.75rem', lineHeight: 1.6 }}>
           Applied when <InlineMath latex="P_r < 1" /> or <InlineMath latex="T_r < 1" />.
           Output <InlineMath latex="\hat{\gamma}_{\mathrm{sub}}" /> is in mN/m.
-          Test nRMSE: 5.46 % · External validation nRMSE: 17.00 %.
+          Test nRMSE: 5.95 % · External validation nRMSE: 18.11 %.
         </p>
         <EqBlock
           label="Subcritical MARS — 15 active terms + intercept"
