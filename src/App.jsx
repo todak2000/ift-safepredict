@@ -1,5 +1,8 @@
 import React, { useState, useCallback, useEffect } from 'react'
-import { Sun, Moon } from 'lucide-react'
+import {
+  Sun, Moon, RotateCcw, Activity, Layers, BookOpen,
+  Info, Compass, FileSpreadsheet, Sparkles
+} from 'lucide-react'
 import AnalyticsDashboard from './components/AnalyticsDashboard.jsx'
 import InputPanel from './components/InputPanel/InputPanel.jsx'
 import PredictionDisplay from './components/PredictionDisplay.jsx'
@@ -12,15 +15,19 @@ import SensitivityChart from './components/SensitivityChart.jsx'
 import ContourMap from './components/ContourMap.jsx'
 import StorageEstimator from './components/StorageEstimator.jsx'
 import CapillaryHeightCalculator from './components/CapillaryHeightCalculator.jsx'
+import AgentCopilot from './components/AgentCopilot.jsx'
 import { predict, detectRegime } from './logic/predict.js'
+import { computeDrho } from './logic/eosEngine.js'
 import { savePrediction } from './logic/db.js'
 import { decodeHash, trackPageView, trackPageExit, encodeInputs } from './logic/tracking.js'
+
+const DEFAULT_EOS = computeDrho(10.0, 323.15, 1.0)
 
 const DEFAULT_INPUTS = {
   P: 10.0,
   T: 323.15,
   salinity: 1.0,
-  drho: 0.40,
+  drho: parseFloat(DEFAULT_EOS.drho.toFixed(4)),
   MCM: 1.0,
   BCM: 0.0,
   x_CH4: 0.0,
@@ -47,13 +54,12 @@ const liveRegime = (inputs) => {
   const Tc_mix = x_CO2 * 304.28 + inputs.x_CH4 * 190.56 + inputs.x_N2 * 126.19
   const Pr = inputs.P / Pc_mix
   const Tr = inputs.T / Tc_mix
-  return detectRegime(Pr, Tr)
+  return detectRegime(Pr, Tr, Pc_mix, Tc_mix)
 }
 
 export default function App() {
   const BASE = import.meta.env.BASE_URL
 
-  // Route /analytics to the standalone dashboard
   if (window.location.pathname.startsWith(BASE + 'analytics')) {
     return <AnalyticsDashboard />
   }
@@ -69,7 +75,6 @@ export default function App() {
 
   const { regime, isNearCritical } = liveRegime(inputs)
 
-  // Theme toggle
   const toggleTheme = useCallback(() => {
     setTheme(prev => {
       const next = prev === 'dark' ? 'light' : 'dark'
@@ -79,7 +84,6 @@ export default function App() {
     })
   }, [])
 
-  // Unit system toggle
   const handleUnitChange = useCallback((id) => {
     setUnitSystem(id)
     localStorage.setItem('ift-units', id)
@@ -94,15 +98,15 @@ export default function App() {
   }, [])
 
   const handlePresetChange = useCallback((preset) => {
-    setInputs(DEFAULT_INPUTS)
-    setResult(null)
-    setHistory([])
-    setScenarios([])
     clearHash()
-    setInputs(preset)
+    setInputs({
+      ...DEFAULT_INPUTS,
+      ...preset,
+      eosEstimated: preset.eosEstimated ?? true,
+      presetName: preset.presetName || preset.label || '',
+    })
   }, [])
 
-  // Auto-predict whenever inputs change (no URL hash update)
   useEffect(() => {
     if (!inputs.brineType) return
     const r = predict(inputs)
@@ -111,7 +115,6 @@ export default function App() {
     savePrediction(inputs, r).catch(() => {})
   }, [inputs])
 
-  // On mount: check shared URL hash, start tracking
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme)
     const shared = decodeHash()
@@ -157,74 +160,168 @@ export default function App() {
   return (
     <div className="app">
       <header className="app-header">
-        <h1>IFT-<span>SafePredict</span></h1>
-        <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center', flexWrap: 'wrap' }}>
-          <span className="version">Sub-MARS-16t | Sup-MARS-35t | v1.0</span>
-          <select
-            className="unit-select"
-            value={unitSystem}
-            onChange={e => handleUnitChange(e.target.value)}
-            title="Unit system"
+        <div className="brand-group">
+          <div className="brand-badge mono">IFT</div>
+          <div className="brand-text">
+            <div className="brand-title-wrap">
+              <span className="brand-title">IFT <span>SafePredict</span></span>
+            </div>
+            <span className="brand-sub">CO₂–Brine Interfacial Tension &amp; SEAL Containment Assurance</span>
+          </div>
+        </div>
+
+        <div className="header-right-actions">
+          <div className="model-pill">
+            <span className="model-pill-dot"></span>
+            <span>Sub-MARS-16t | Sup-MARS-35t | PR-EOS</span>
+          </div>
+
+          <div className="unit-select-wrap">
+            <select
+              className="unit-select mono"
+              value={unitSystem}
+              onChange={e => handleUnitChange(e.target.value)}
+              title="Select Engineering Units"
+            >
+              {UNIT_OPTIONS.map(u => (
+                <option key={u.id} value={u.id}>{u.label}</option>
+              ))}
+            </select>
+          </div>
+
+          <button
+            className="icon-btn"
+            onClick={handleReset}
+            title="Reset All Parameters (Esc)"
+            aria-label="Reset parameters"
           >
-            {UNIT_OPTIONS.map(u => (
-              <option key={u.id} value={u.id}>{u.label}</option>
-            ))}
-          </select>
-          <button className="btn-ghost theme-toggle" onClick={toggleTheme} title="Toggle theme">
-            {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+            <RotateCcw size={15} />
+          </button>
+
+          <button
+            className="icon-btn"
+            onClick={toggleTheme}
+            title="Toggle Light/Dark Theme"
+            aria-label="Toggle theme"
+          >
+            {theme === 'dark' ? <Sun size={15} /> : <Moon size={15} />}
           </button>
         </div>
       </header>
 
-      <div className="tabs">
-        <button className={`tab ${activeTab === 'predict' ? 'active' : ''}`}
-          onClick={() => setActiveTab('predict')}>Predict</button>
-        <button className={`tab ${activeTab === 'compare' ? 'active' : ''}`}
-          onClick={() => setActiveTab('compare')}>Compare Scenarios</button>
-        <button className={`tab ${activeTab === 'equations' ? 'active' : ''}`}
-          onClick={() => setActiveTab('equations')}>Equations</button>
-        <button className={`tab ${activeTab === 'about' ? 'active' : ''}`}
-          onClick={() => setActiveTab('about')}>About</button>
-        <button className={`tab ${activeTab === 'ptmap' ? 'active' : ''}`}
-          onClick={() => setActiveTab('ptmap')}>P–T Map</button>
-        <button className={`tab ${activeTab === 'batch' ? 'active' : ''}`}
-          onClick={() => setActiveTab('batch')}>Batch Predict</button>
-      </div>
+      <nav className="tabs" role="tablist" aria-label="Application tabs">
+        <button
+          className={`tab ${activeTab === 'predict' ? 'active' : ''}`}
+          role="tab"
+          aria-selected={activeTab === 'predict'}
+          onClick={() => setActiveTab('predict')}
+        >
+          <Activity size={15} />
+          <span>Predictor &amp; HUD</span>
+        </button>
+        <button
+          className={`tab ${activeTab === 'agent' ? 'active' : ''}`}
+          role="tab"
+          aria-selected={activeTab === 'agent'}
+          onClick={() => setActiveTab('agent')}
+        >
+          <Sparkles size={16} />
+          <span>SEAL Agent</span>
+        </button>
+        <button
+          className={`tab ${activeTab === 'compare' ? 'active' : ''}`}
+          role="tab"
+          aria-selected={activeTab === 'compare'}
+          onClick={() => setActiveTab('compare')}
+        >
+          <Layers size={15} />
+          <span>Compare Scenarios {scenarios.length > 0 && `(${scenarios.length})`}</span>
+        </button>
+        <button
+          className={`tab ${activeTab === 'ptmap' ? 'active' : ''}`}
+          role="tab"
+          aria-selected={activeTab === 'ptmap'}
+          onClick={() => setActiveTab('ptmap')}
+        >
+          <Compass size={15} />
+          <span>P–T Regime Map</span>
+        </button>
+        <button
+          className={`tab ${activeTab === 'batch' ? 'active' : ''}`}
+          role="tab"
+          aria-selected={activeTab === 'batch'}
+          onClick={() => setActiveTab('batch')}
+        >
+          <FileSpreadsheet size={15} />
+          <span>Batch Predictor</span>
+        </button>
+        <button
+          className={`tab ${activeTab === 'equations' ? 'active' : ''}`}
+          role="tab"
+          aria-selected={activeTab === 'equations'}
+          onClick={() => setActiveTab('equations')}
+        >
+          <BookOpen size={15} />
+          <span>Model Equations</span>
+        </button>
+        <button
+          className={`tab ${activeTab === 'about' ? 'active' : ''}`}
+          role="tab"
+          aria-selected={activeTab === 'about'}
+          onClick={() => setActiveTab('about')}
+        >
+          <Info size={15} />
+          <span>Scientific Basis</span>
+        </button>
+      </nav>
 
       {activeTab === 'predict' && (
-        <>
-          <div className="main-layout">
-            <InputPanel
+        <div className="main-layout">
+          <InputPanel
+            inputs={inputs}
+            regime={regime}
+            isNearCritical={isNearCritical}
+            unitSystem={unitSystem}
+            onChange={setInputs}
+            onPredict={handlePredict}
+            onReset={handleReset}
+            onPresetChange={handlePresetChange}
+          />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+            <PredictionDisplay
+              result={result}
               inputs={inputs}
-              regime={regime}
-              isNearCritical={isNearCritical}
               unitSystem={unitSystem}
-              onChange={setInputs}
-              onPredict={handlePredict}
-              onReset={handleReset}
-              onPresetChange={handlePresetChange}
+              onOpenAgent={() => setActiveTab('agent')}
             />
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-              <PredictionDisplay result={result} inputs={inputs} unitSystem={unitSystem} />
-              {result && (
-                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                  <button
-                    className="btn btn-secondary"
-                    onClick={handleSaveScenario}
-                    disabled={scenarios.length >= 3}
-                  >
-                    + Save to comparison {scenarios.length >= 3 ? '(max 3)' : ''}
-                  </button>
-                </div>
-              )}
-              <UncertaintyChart result={result} history={history} />
-              {result && <SensitivityChart inputs={inputs} />}
-              {result && <StorageEstimator result={result} />}
-              {result && <CapillaryHeightCalculator result={result} />}
-              <InputHistory onLoad={setInputs} />
-            </div>
+            {result && (
+              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                <button
+                  className="btn btn-secondary"
+                  onClick={handleSaveScenario}
+                  disabled={scenarios.length >= 3}
+                >
+                  + Add to Scenario Comparison {scenarios.length >= 3 ? '(Limit 3)' : `(${scenarios.length}/3)`}
+                </button>
+              </div>
+            )}
+            <UncertaintyChart result={result} history={history} />
+            {result && <SensitivityChart inputs={inputs} />}
+            {result && <CapillaryHeightCalculator result={result} inputs={inputs} />}
+            {result && <StorageEstimator result={result} />}
+            <InputHistory onLoad={setInputs} />
           </div>
-        </>
+        </div>
+      )}
+
+      {activeTab === 'agent' && (
+        <AgentCopilot
+          currentInputs={inputs}
+          onApplyInputs={(newInp) => {
+            setInputs(prev => ({ ...prev, ...newInp }))
+            setActiveTab('predict')
+          }}
+        />
       )}
 
       {activeTab === 'compare' && (
@@ -236,68 +333,98 @@ export default function App() {
       {activeTab === 'ptmap' && (
         <ContourMap
           inputs={inputs}
-          onSelectPT={({ P, T }) => setInputs(prev => ({ ...prev, P, T }))}
+          onSelectPT={({ P, T }) => {
+            const eos = computeDrho(P, T, inputs.salinity ?? inputs.MCM ?? 0, {
+              BCM: inputs.BCM ?? 0,
+              x_CH4: inputs.x_CH4 ?? 0,
+              x_N2: inputs.x_N2 ?? 0,
+            })
+            setInputs(prev => ({ ...prev, presetName: '', P, T, drho: parseFloat(eos.drho.toFixed(4)), eosEstimated: true }))
+          }}
         />
       )}
 
       {activeTab === 'batch' && <BatchPredict />}
 
       {activeTab === 'about' && (
-        <div className="card" style={{ maxWidth: 680 }}>
-          <p className="card-title">About IFT-SafePredict</p>
-          <p style={{ fontSize: '0.85rem', lineHeight: 1.7, marginBottom: '1rem' }}>
-            Physics-informed ML prediction of CO₂-Brine interfacial tension (IFT) using
-            dual-regime MARS models trained on 3,265 laboratory measurements across 16 sources.
-          </p>
-          <h3 style={{ fontSize: '0.82rem', fontWeight: 700, marginBottom: '0.5rem' }}>Models</h3>
-          <table style={{ fontSize: '0.78rem', borderCollapse: 'collapse', width: '100%' }}>
-            <thead>
-              <tr style={{ borderBottom: '1px solid #334155', color: '#94a3b8' }}>
-                <th style={{ textAlign: 'left', padding: '0.3rem 0.5rem' }}>Regime</th>
-                <th style={{ textAlign: 'left', padding: '0.3rem 0.5rem' }}>Model</th>
-                <th style={{ textAlign: 'left', padding: '0.3rem 0.5rem' }}>Test nRMSE</th>
-                <th style={{ textAlign: 'left', padding: '0.3rem 0.5rem' }}>EV nRMSE</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr style={{ borderBottom: '1px solid #1e293b' }}>
-                <td style={{ padding: '0.3rem 0.5rem' }}>Subcritical</td>
-                <td style={{ padding: '0.3rem 0.5rem' }}>MARS 16-term</td>
-                <td style={{ padding: '0.3rem 0.5rem' }}>5.95%</td>
-                <td style={{ padding: '0.3rem 0.5rem' }}>18.11%</td>
-              </tr>
-              <tr>
-                <td style={{ padding: '0.3rem 0.5rem' }}>Supercritical</td>
-                <td style={{ padding: '0.3rem 0.5rem' }}>MARS 35-term</td>
-                <td style={{ padding: '0.3rem 0.5rem' }}>5.60%</td>
-                <td style={{ padding: '0.3rem 0.5rem' }}>5.62%</td>
-              </tr>
-            </tbody>
-          </table>
-          <h3 style={{ fontSize: '0.82rem', fontWeight: 700, margin: '1rem 0 0.5rem' }}>UQ Framework</h3>
-          <p style={{ fontSize: '0.78rem', lineHeight: 1.7, marginBottom: '0.5rem' }}>
-            80% conformal prediction intervals. Base half-width: ±2.6928 mN/m (sub), ±2.25 mN/m (sup).
-            Applicability domain assessed via Williams-Plot hat-matrix leverage (thesis §3.12.2):
-            GREEN (h ≤ h*): UIF = 1.0; AMBER (h* &lt; h ≤ 3h*): UIF = UIFinterval (3.59× sub, 1.06× sup);
-            RED (h &gt; 3h*): UIF = 5.0 (~95% PI). Thresholds: h* = 0.0342 (sub), 0.0233 (sup).
-          </p>
-          <h3 style={{ fontSize: '0.82rem', fontWeight: 700, margin: '1rem 0 0.5rem' }}>Citation</h3>
-          <p style={{ fontSize: '0.78rem', color: '#94a3b8', fontStyle: 'italic' }}>
-            Olagunju, D. et al. (2026). Closed-Form MARS Equations with Calibrated Conformal Uncertainty for CO₂–Brine Interfacial Tension Prediction in Geological Carbon Storage.
-          </p>
-          <h3 style={{ fontSize: '0.82rem', fontWeight: 700, margin: '1rem 0 0.5rem' }}>Privacy</h3>
-          <p style={{ fontSize: '0.78rem', lineHeight: 1.7 }}>
-            This tool is 100% client-side. No data is sent to any server.
-            All computation runs locally in your browser.
-          </p>
+        <div className="card" style={{ maxWidth: 840, margin: '0 auto' }}>
+          <div className="card-title-row">
+            <div className="card-title-group">
+              <span className="card-title">Scientific Basis &amp; Agentic Assurance Architecture</span>
+              <span className="card-subtitle">Physics-informed Multivariate Adaptive Regression Splines + Split Conformal UQ</span>
+            </div>
+          </div>
+          <div style={{ fontSize: '0.82rem', lineHeight: 1.7, color: 'var(--text-muted)' }}>
+            <p style={{ marginBottom: '1rem' }}>
+              <strong style={{ color: 'var(--text-main)' }}>IFT-SafePredict</strong> couples closed-form, white-box
+              dual-regime MARS equations trained on <strong style={{ color: 'var(--text-main)' }}>3,265 laboratory observations</strong> across
+              16 experimental campaigns with SHA-256-locked cross-laboratory external validation, split conformal prediction intervals,
+              volume-translated Peng–Robinson EOS phase densities, and an <strong style={{ color: 'var(--text-main)' }}>Agentic Containment Assurance Co-Pilot</strong>.
+            </p>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem', margin: '1.25rem 0' }}>
+              <div style={{ background: 'var(--bg-input)', padding: '1rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)' }}>
+                <div style={{ fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--accent)', marginBottom: '0.4rem' }}>Subcritical Architecture</div>
+                <div style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--text-main)', fontFamily: 'var(--font-mono)' }}>16 Basis Terms</div>
+                <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '0.35rem' }}>T<sub>r</sub> &lt; 1.0 or P<sub>r</sub> &lt; 1.0 &mdash; LOSO median nRMSE 6.35%; UIF<sub>interval</sub> = 3.59 triggers local calibration guardrails.</div>
+              </div>
+              <div style={{ background: 'var(--bg-input)', padding: '1rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)' }}>
+                <div style={{ fontSize: '0.74rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--color-sup)', marginBottom: '0.4rem' }}>Supercritical Architecture</div>
+                <div style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--text-main)', fontFamily: 'var(--font-mono)' }}>35 Basis Terms</div>
+                <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '0.35rem' }}>T<sub>r</sub> &ge; 1.0 and P<sub>r</sub> &ge; 1.0 &mdash; EV R<sup>2</sup> = 0.9452 (5.62% nRMSE); portable UIF<sub>interval</sub> = 1.06 (Green tier).</div>
+              </div>
+              <div style={{ background: 'var(--bg-input)', padding: '1rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)' }}>
+                <div style={{ fontSize: '0.74rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--green)', marginBottom: '0.4rem' }}>5-Gate Composite Trust</div>
+                <div style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--text-main)', fontFamily: 'var(--font-mono)' }}>Zero Hallucination</div>
+                <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '0.35rem' }}>Synthesises Kay&apos;s regime, Hat leverage h*, &plusmn;2 °C near-critical window, UIF<sub>interval</sub> portability, and MICP capillary odds.</div>
+              </div>
+            </div>
+
+            <h3 style={{ fontSize: '0.8rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', margin: '1.5rem 0 0.5rem', color: 'var(--text-main)' }}>Validation &amp; Cross-Laboratory Benchmarks</h3>
+            <div className="batch-table-container" style={{ margin: '0.75rem 0 1.25rem' }}>
+              <table className="batch-table">
+                <thead>
+                  <tr>
+                    <th>Regime</th>
+                    <th>Model</th>
+                    <th>Test nRMSE</th>
+                    <th>2-Lab EV nRMSE</th>
+                    <th>All-Lab LOSO Median</th>
+                    <th>Conformal q80 / UIF</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Subcritical</td>
+                    <td>MARS 16-term</td>
+                    <td>5.95%</td>
+                    <td>9.96% (Agg.) / 18.11% (All)</td>
+                    <td>6.35% (14 labs)</td>
+                    <td>±2.69 mN/m · UIF 3.59</td>
+                  </tr>
+                  <tr>
+                    <td>Supercritical</td>
+                    <td>MARS 35-term</td>
+                    <td>5.60%</td>
+                    <td>5.62% (R² = 0.9452)</td>
+                    <td>5.65% (15 labs)</td>
+                    <td>±2.25 mN/m · UIF 1.06</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <h3 style={{ fontSize: '0.8rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', margin: '1.5rem 0 0.5rem', color: 'var(--text-main)' }}>Citation &amp; Attribution</h3>
+            <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontStyle: 'italic', background: 'var(--bg-input)', padding: '0.75rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-subtle)' }}>
+              Olagunju, D., Agwu, O. E., &amp; Md Yusof, M. A. (2026). Closed-Form MARS Equations with Calibrated Conformal Uncertainty and Cross-Laboratory Portability Diagnostics for CO₂–Brine Interfacial Tension in Geological Carbon Storage. Universiti Teknologi PETRONAS.
+            </p>
+          </div>
         </div>
       )}
 
-      <footer className="app-footer">
-        IFT-SafePredict v1.0 | Sub-MARS-16t | Sup-MARS-35t |
-        All computation is client-side — no data is transmitted.
-        <div style={{ marginTop: '0.75rem', fontSize: '0.65rem' }}>
-          <a href={BASE + 'analytics'} style={{ color: 'var(--color-border)', textDecoration: 'none' }}>admin</a>
+      <footer className="app-footer" style={{ marginTop: '3rem', paddingTop: '1.5rem', borderTop: '1px solid var(--border)', textAlign: 'center', fontSize: '0.72rem', color: 'var(--text-dim)' }}>
+        <div>IFT-SafePredict &middot; White-Box MARS + Conformal Assurance Intelligence &middot; Universiti Teknologi PETRONAS</div>
+        <div style={{ marginTop: '0.35rem' }}>
+          <a href={BASE + 'analytics'} style={{ color: 'var(--text-dim)', textDecoration: 'none' }}>Internal Performance Monitor</a>
         </div>
       </footer>
     </div>

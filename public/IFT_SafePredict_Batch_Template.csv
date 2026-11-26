@@ -1,0 +1,11 @@
+Site,P,T_C,MCM,BCM,x_CH4,x_N2,brineType,drho
+Sleipner (Utsira North Sea),10.30,37.00,0.60,0.00,0.00,0.00,NaCl,0.3916
+In Salah (Krechba Algeria),18.00,90.00,0.44,0.00,0.00,0.00,NaCl,
+Sarawak Kasawari (Luconia Malaysia),22.50,112.00,0.60,0.00,0.00,0.00,NaCl,
+Malay Basin (Offshore Malaysia),19.50,108.00,0.45,0.00,0.00,0.00,NaCl,
+Peterhead Shallow (UK Subcritical),5.20,32.00,1.50,0.00,0.00,0.00,NaCl,
+UAE Carbonate (8727 ft),38.22,107.98,1.90,0.00,0.00,0.00,NaCl,
+UAE Carbonate (10865 ft High-T),44.85,134.06,1.90,0.00,0.00,0.00,NaCl,
+Saudi Basalt (10 MPa),10.00,49.85,3.419,0.00,0.00,0.00,NaCl,
+Vietnam Deep Saline (Zero-Salt),21.41,100.00,0.00,0.00,0.00,0.00,Water,
+Snohvit (Tubaen Barents Sea),28.00,96.85,2.60,0.00,0.00,0.00,NaCl,

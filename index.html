@@ -3,10 +3,21 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>IFT-SafePredict | CO₂-Brine Interfacial Tension</title>
-    <meta name="description" content="Physics-informed ML prediction of CO₂-Brine interfacial tension with calibrated uncertainty quantification." />
+    <title>IFT-SafePredict: CO₂-Brine Interfacial Tension Intelligence</title>
+    <meta name="description" content="Physics-informed dual-regime MARS prediction of CO₂-Brine interfacial tension with calibrated uncertainty quantification and CCUS storage intelligence." />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <script>document.documentElement.setAttribute('data-theme', localStorage.getItem('ift-theme') || 'dark')</script>
+
+    <!-- Typography: Inter + JetBrains Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;450;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+    <script>
+      (function() {
+        const saved = localStorage.getItem('ift-theme') || 'dark';
+        document.documentElement.setAttribute('data-theme', saved);
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

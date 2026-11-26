@@ -464,11 +464,10 @@ function buildInputSheet(ws, wb) {
   // Simplified: flag if Pr or Tr out of bounds of active regime
   const uifFormula = (
     `=IF(OR(` +
-      // Red: basic domain check on Pr/Tr
-      `AND(B${regimeRowNum}="Subcritical",OR(B${prRowNum}<0.04,B${prRowNum}>0.999)),` +
-      `AND(B${regimeRowNum}="Supercritical",OR(B${prRowNum}<1.011,B${prRowNum}>4.457))` +
-    `),5.0,` +
-    `IF(OR(B${brineRowNum}="Na2SO4",B5>2.5),3.41,1.0))`
+      `AND(B${regimeRowNum}="Subcritical",OR(B${prRowNum}<0.0135,B${prRowNum}>4.695,B6>1.5)),` +
+      `AND(B${regimeRowNum}="Supercritical",OR(B${prRowNum}<1.000,B${prRowNum}>9.419,B6>5.0))` +
+    `),2.50,` +
+    `IF(B${regimeRowNum}="Subcritical",2.50,IF(B${brineRowNum}="Na2SO4",1.97,1.00)))`
   );
 
   const uifRow = ws.addRow(['UIF Factor', uifFormula, '', 'Uncertainty Inflation Factor']);
@@ -477,29 +476,29 @@ function buildInputSheet(ws, wb) {
   uifRow.getCell(2).numFmt = '0.00';
   const uifRowNum = uifRow.number;
 
-  const qBase = `IF(B${regimeRowNum}="Subcritical",2.6928,2.25)`;
-
-  const p10Row = ws.addRow([
-    'IFT P10 — 80% CI lower (mN/m)',
-    `=MAX(12.4,B${p50RowNum}-(${qBase})*B${uifRowNum})`,
-    'mN/m', '80% conformal lower bound',
-  ]);
-  p10Row.eachCell(c => { c.border = border('thin'); });
-  p10Row.getCell(2).numFmt = '0.00';
-  p10Row.getCell(2).fill = fill(C.rowAlt);
+  const qBase = `IF(B${regimeRowNum}="Subcritical",2.6928,2.2507)`;
 
   const p90Row = ws.addRow([
-    'IFT P90 — 80% CI upper (mN/m)',
-    `=MIN(78.88,B${p50RowNum}+(${qBase})*B${uifRowNum})`,
-    'mN/m', '80% conformal upper bound',
+    'IFT P90 — Conservative lower (mN/m)',
+    `=MAX(12.4,B${p50RowNum}-(${qBase})*B${uifRowNum})`,
+    'mN/m', 'Conservative (low IFT) conformal bound',
   ]);
   p90Row.eachCell(c => { c.border = border('thin'); });
   p90Row.getCell(2).numFmt = '0.00';
   p90Row.getCell(2).fill = fill(C.rowAlt);
 
+  const p10Row = ws.addRow([
+    'IFT P10 — Optimistic upper (mN/m)',
+    `=MIN(78.88,B${p50RowNum}+(${qBase})*B${uifRowNum})`,
+    'mN/m', 'Optimistic (high IFT) conformal bound',
+  ]);
+  p10Row.eachCell(c => { c.border = border('thin'); });
+  p10Row.getCell(2).numFmt = '0.00';
+  p10Row.getCell(2).fill = fill(C.rowAlt);
+
   const qaRow = ws.addRow([
-    'QA Status',
-    `=IF(B${uifRowNum}>=5,"RED ⚠ Extrapolation",IF(B${uifRowNum}>1,"YELLOW ⚠ High Variation","GREEN ✓ Standard"))`,
+    'Composite Trust Verdict',
+    `=IF(AND(B${regimeRowNum}="Subcritical",B6>1.5),"RED ⚠ Out-of-Domain",IF(B${uifRowNum}>1,"YELLOW ⚠ Escalated / Verify Locally","GREEN ✓ Certified Portable"))`,
     '', 'GREEN / YELLOW / RED',
   ]);
   qaRow.eachCell(c => { c.border = border('thin'); });
@@ -591,16 +590,16 @@ function buildInstructionsSheet(ws) {
   p('x_N₂     : N₂ mole fraction. Set 0 for pure CO₂.');
   p('Brine type: Select from dropdown. Sets internal binary flags (BCM_bin, CH4_bin, N2_bin) automatically.');
   ws.addRow([]);
-  h2('§3  QA Status interpretation');
-  p('GREEN ✓   : Input within validated training domain. Standard uncertainty (UIF=1.0).');
-  p('YELLOW ⚠  : Na₂SO₄ brine or MCM > 2.5 mol/kg. Li et al. (2012) apparatus offset (+13.51%). UIF=3.41.');
-  p('RED ⚠     : One or more inputs outside training domain bounds. Extrapolation. UIF=5.0. Use with caution.');
+  h2('§3  Composite Trust Verdict interpretation');
+  p('GREEN ✓   : Supercritical input within validated domain & portable conformal regime (UIF=1.00).');
+  p('YELLOW ⚠  : Subcritical cross-lab shift (UIF_interval=3.59 → 2.50× screening escalation) or Na₂SO₄ offset.');
+  p('RED ⚠     : Input outside training domain bounds (e.g. subcritical BCM > 1.5 mol/kg). Collect n ≥ 30 lab points.');
   ws.addRow([]);
   h2('§4  Model training summary');
   p('Dataset    : 3,265 CO₂-Brine IFT measurements (1,400 subcritical + 1,865 supercritical), 16 laboratories.');
   p('Subcritical: MARS 16-term (compliance-fixed). Test nRMSE=5.95%, R²=0.939. Features: Pr, Tr, Δρ², x_CH₄, CH4_bin.');
   p('Supercritical: MARS 35-term. Test nRMSE=5.60%, R²=0.928. Features: all 10 (Pr,Tr,MCM,BCM,x_CH₄,x_N₂,Δρ²,BCM_bin,CH4_bin,N2_bin).');
-  p('UQ: 80% conformal prediction intervals. Base half-width ±2.6928 mN/m (sub), ±2.25 mN/m (sup).');
+  p('UQ: 80% conformal prediction intervals. Base half-width ±2.6928 mN/m (sub), ±2.2507 mN/m (sup).');
   p('P10/P90 clamped at physical limits: floor 12.4 mN/m, cap 78.88 mN/m.');
   ws.addRow([]);
   h2('§5  Citation');

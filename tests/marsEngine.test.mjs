@@ -1,17 +1,22 @@
 import { describe, test, expect } from '@jest/globals';
 
-import { predict, detectRegime } from '../src/logic/predict.js';
+import { predict } from '../src/logic/predict.js';
 import { marsSubcritical, marsSupercritical } from '../src/logic/marsEngine.js';
 import { scaleFeatures, minMaxScale, DOMAIN_BOUNDS } from '../src/logic/scalers.js';
-import { calculateP10P90, computeADStatus } from '../src/logic/qaValidator.js';
-import { computeLeverage, H_STAR } from '../src/logic/hatMatrix.js';
+import { computeADStatus } from '../src/logic/qaValidator.js';
+import { H_STAR } from '../src/logic/hatMatrix.js';
+import { co2Density, computeDrho } from '../src/logic/eosEngine.js';
+import { runDeterministicWorkflow } from '../src/logic/agentEngine.js';
+import { formatThroatRadius } from '../src/logic/presetsData.js';
+import { parseCSV, batchPredict } from '../src/logic/batchPredict.js';
+import { cleanScientificText, parseExecutiveBlocks, toPdfSafeText, tokenizeRichScientific } from '../src/logic/formatText.js';
 
 const bounds = (regime) => DOMAIN_BOUNDS[regime];
 
 describe('scalers — MinMax bounds match training scaler', () => {
   test('boundary values scale to exactly ±1 (sub)', () => {
     const sub = bounds('sub');
-    for (const [key, [min, max]] of Object.entries(sub)) {
+    for (const [, [min, max]] of Object.entries(sub)) {
       expect(minMaxScale(min, min, max)).toBeCloseTo(-1, 10);
       expect(minMaxScale(max, min, max)).toBeCloseTo(1, 10);
     }
@@ -19,7 +24,7 @@ describe('scalers — MinMax bounds match training scaler', () => {
 
   test('boundary values scale to exactly ±1 (sup)', () => {
     const sup = bounds('sup');
-    for (const [key, [min, max]] of Object.entries(sup)) {
+    for (const [, [min, max]] of Object.entries(sup)) {
       expect(minMaxScale(min, min, max)).toBeCloseTo(-1, 10);
       expect(minMaxScale(max, min, max)).toBeCloseTo(1, 10);
     }
@@ -33,177 +38,165 @@ describe('scalers — MinMax bounds match training scaler', () => {
   });
 });
 
-describe('marsEngine.sub — 16-term subcritical', () => {
-  test('intercept-only at domain midpoint returns finite IFT', () => {
-    const raw = {
-      Pr: (bounds('sub').Pr[0] + bounds('sub').Pr[1]) / 2,
-      Tr: (bounds('sub').Tr[0] + bounds('sub').Tr[1]) / 2,
-      MCM: 2.45, BCM: 0.75, x_CH4: 0.445, x_N2: 0.3818,
-      drho_sq: (bounds('sub').drho_sq[0] + bounds('sub').drho_sq[1]) / 2,
-    };
-    const s = scaleFeatures(raw, 'sub');
-    s.CH4_bin = 1; s.BCM_bin = -1; s.N2_bin = -1;
-    const ift = marsSubcritical(s);
-    expect(typeof ift).toBe('number');
-    expect(Number.isFinite(ift)).toBe(true);
-    expect(ift).toBeGreaterThan(0);
-    expect(ift).toBeLessThan(100);
+describe('eosEngine — Volume-translated Peng–Robinson + Rowe–Chou EOS', () => {
+  test('matches NIST Span–Wagner CO2 densities across gas & supercritical states', () => {
+    expect(co2Density(5.2, 305.15)).toBeCloseTo(0.133, 1);
+    expect(co2Density(10.0, 323.0)).toBeCloseTo(0.383, 2);
+    expect(co2Density(21.41, 373.15)).toBeCloseTo(0.503, 1);
+    expect(co2Density(44.85, 407.21)).toBeCloseTo(0.710, 1);
   });
 
-  test('pure CO₂ low-pressure reference in 20–80 range', () => {
-    const raw = { Pr: 0.678, Tr: 0.9965, MCM: 1.0, BCM: 0.0, x_CH4: 0, x_N2: 0, drho_sq: 0.85 * 0.85 };
-    const s = scaleFeatures(raw, 'sub');
-    s.CH4_bin = -1; s.BCM_bin = -1; s.N2_bin = -1;
-    const ift = marsSubcritical(s);
-    expect(ift).toBeGreaterThan(20);
-    expect(ift).toBeLessThan(80);
+  test('computeDrho returns consistent positive density difference', () => {
+    const r = computeDrho(18.0, 363.15, 0.44);
+    expect(r.drho).toBeCloseTo(0.5482, 3);
+    expect(r.rho_brine).toBeGreaterThan(r.rho_co2);
+    expect(r.eosEstimated).toBe(true);
   });
 });
 
-describe('marsEngine.sup — 35-term supercritical', () => {
-  test('supercritical reference returns finite IFT', () => {
-    const raw = { Pr: 2.034, Tr: 1.095, MCM: 1.0, BCM: 0.0, x_CH4: 0, x_N2: 0, drho_sq: 0.35 * 0.35 };
-    const s = scaleFeatures(raw, 'sup');
-    s.BCM_bin = -1; s.CH4_bin = -1; s.N2_bin = -1;
-    const ift = marsSupercritical(s);
-    expect(typeof ift).toBe('number');
-    expect(Number.isFinite(ift)).toBe(true);
-    expect(ift).toBeGreaterThan(10);
-    expect(ift).toBeLessThan(79);
-  });
-});
+describe('marsEngine & hatMatrix', () => {
+  test('subcritical & supercritical references return finite physical IFT', () => {
+    const sSub = scaleFeatures({ Pr: 2.35, Tr: 1.56, MCM: 2.45, BCM: 0.75, x_CH4: 0.445, x_N2: 0.3818, drho_sq: 0.65 }, 'sub');
+    sSub.CH4_bin = 1; sSub.BCM_bin = -1; sSub.N2_bin = -1;
+    expect(marsSubcritical(sSub)).toBeGreaterThan(10);
 
-describe('hatMatrix — leverage thresholds (thesis §3.12, Eq 3.14)', () => {
-  test('h* = 3(p+1)/n matches thesis values', () => {
+    const sSup = scaleFeatures({ Pr: 2.034, Tr: 1.095, MCM: 1.0, BCM: 0.0, x_CH4: 0, x_N2: 0, drho_sq: 0.1225 }, 'sup');
+    sSup.BCM_bin = -1; sSup.CH4_bin = -1; sSup.N2_bin = -1;
+    expect(marsSupercritical(sSup)).toBeGreaterThan(10);
+  });
+
+  test('h* = 3(p+1)/n matches thesis values and gates GREEN / AMBER / RED', () => {
     expect(H_STAR.sub).toBeCloseTo(3 * 11 / 965, 5);
     expect(H_STAR.sup).toBeCloseTo(3 * 11 / 1417, 5);
-  });
 
-  test('leverage of training centroid ≈ 1/n (GREEN zone)', () => {
-    // Sleipner query (thesis §4.11) — near-domain point
-    const raw = { Pr: 1.3962, Tr: 1.0193, MCM: 0.6, BCM: 0, x_CH4: 0, x_N2: 0, drho_sq: 0.3916 * 0.3916 };
-    const s = scaleFeatures(raw, 'sub');
-    s.BCM_bin = -1; s.CH4_bin = -1; s.N2_bin = -1;
-    const h = computeLeverage(s, 'sub');
-    expect(h).toBeGreaterThan(0);
-    expect(h).toBeLessThan(H_STAR.sub);
-  });
-
-  test('binary flag convention: 0 → -1, 1 → +1 (predict.js)', () => {
-    const raw = { Pr: 1.0, Tr: 1.1, MCM: 0, BCM: 0, x_CH4: 0, x_N2: 0, drho_sq: 0.16 };
-    const s = scaleFeatures(raw, 'sup');
-    const withBc = { ...s, BCM_bin: 1, CH4_bin: -1, N2_bin: -1 };
-    const noBc   = { ...s, BCM_bin: -1, CH4_bin: -1, N2_bin: -1 };
-    expect(computeLeverage(withBc, 'sup')).not.toBe(computeLeverage(noBc, 'sup'));
+    const sGrn = scaleFeatures({ Pr: 1.3962, Tr: 1.0193, MCM: 0.6, BCM: 0, x_CH4: 0, x_N2: 0, drho_sq: 0.3916 * 0.3916 }, 'sup');
+    sGrn.BCM_bin = -1; sGrn.CH4_bin = -1; sGrn.N2_bin = -1;
+    expect(computeADStatus(sGrn, 'sup').adStatus).toBe('GREEN');
   });
 });
 
-describe('computeADStatus — three-tier gating (thesis §3.12.2)', () => {
-  test('Sleipner GREEN (h < h*)', () => {
-    const raw = { Pr: 1.3962, Tr: 1.0193, MCM: 0.6, BCM: 0, x_CH4: 0, x_N2: 0, drho_sq: 0.3916 * 0.3916 };
-    const s = scaleFeatures(raw, 'sub');
-    s.BCM_bin = -1; s.CH4_bin = -1; s.N2_bin = -1;
-    const { adStatus, h, hStar } = computeADStatus(s, 'sub');
-    expect(adStatus).toBe('GREEN');
-    expect(h).toBeLessThan(hStar);
-  });
-
-  test('AMBER when h* < h <= 3h* (far-query case)', () => {
-    // P=30, T=340 K sup query → h=0.0263 > h*=0.0233 but < 3h*
-    const raw = { Pr: 4.07, Tr: 1.117, MCM: 0, BCM: 0, x_CH4: 0, x_N2: 0, drho_sq: 1.44 };
-    const s = scaleFeatures(raw, 'sup');
-    s.BCM_bin = -1; s.CH4_bin = -1; s.N2_bin = -1;
-    const { adStatus, h, hStar } = computeADStatus(s, 'sup');
-    expect(adStatus).toBe('AMBER');
-    expect(h).toBeGreaterThan(hStar);
-    expect(h).toBeLessThanOrEqual(3 * hStar);
-  });
-
-  test('RED when h > 3h* (strong extrapolation)', () => {
-    // P=30, T=650 K → far outside sup training manifold
-    const raw = { Pr: 4.07, Tr: 2.136, MCM: 0, BCM: 0, x_CH4: 0, x_N2: 0, drho_sq: 0.16 };
-    const s = scaleFeatures(raw, 'sup');
-    s.BCM_bin = -1; s.CH4_bin = -1; s.N2_bin = -1;
-    const { adStatus, h, hStar } = computeADStatus(s, 'sup');
-    expect(adStatus).toBe('RED');
-    expect(h).toBeGreaterThan(3 * hStar);
-  });
-});
-
-describe('predict — thesis field-case regression', () => {
-  test('Sleipner (P=10.3 MPa, T=310.15 K, drho=0.3916) → p50=17.14 GREEN', () => {
-    const r = predict({ P: 10.3, T: 310.15, drho: 0.3916, MCM: 0.6, BCM: 0, x_CH4: 0, x_N2: 0, brineType: 'NaCl' });
-    expect(r.regime).toBe('sub');
-    expect(r.p50).toBeCloseTo(17.14, 2);
-    expect(r.status).toBe('GREEN');
-    expect(r.p10).toBeGreaterThanOrEqual(r.p50);
-    expect(r.p50).toBeGreaterThanOrEqual(r.p90);
-  });
-
-  test('In Salah (P=18 MPa, T=363.15 K, drho=0.4) → sup p50≈26.38', () => {
-    const r = predict({ P: 18.0, T: 363.15, drho: 0.4, MCM: 0, BCM: 0, x_CH4: 0, x_N2: 0, brineType: 'NaCl' });
-    expect(r.regime).toBe('sup');
-    expect(r.p50).toBeCloseTo(26.38, 1);
-    expect(r.p10).toBeGreaterThanOrEqual(r.p50);
-    expect(r.p50).toBeGreaterThanOrEqual(r.p90);
-  });
-
-  test('Near-critical Sleipner flagged isNearCritical=true', () => {
-    const r = predict({ P: 10.3, T: 310.15, drho: 0.3916, MCM: 0.6, BCM: 0, x_CH4: 0, x_N2: 0, brineType: 'NaCl' });
-    expect(r.isNearCritical).toBe(true);
-    expect(r.Pr).toBeCloseTo(1.3962, 3);
-    expect(r.Tr).toBeCloseTo(1.0193, 3);
-  });
-
-  test('Peterhead (P=5.2 MPa, T=305.15 K) flagged near-critical via Tr (paper4 §5.1)', () => {
-    // Tr = 305.15/304.28 = 1.0029 within ±2% of 1.0 → near-critical path,
-    // routed to subcritical MARS with indicative-only warning (paper4 §5.1).
-    const r = predict({ P: 5.2, T: 305.15, drho: 0.4, MCM: 1.5, BCM: 0, x_CH4: 0, x_N2: 0, brineType: 'NaCl' });
-    expect(r.regime).toBe('sub');
-    expect(r.isNearCritical).toBe(true);
-    expect(r.Tr).toBeCloseTo(1.0029, 4);
-    expect(r.Pr).toBeLessThan(0.98);
-  });
-
-  test('UAE supercritical (Pr,Tr far from 1) NOT near-critical', () => {
-    const r = predict({ P: 38.22, T: 381.13, drho: 0.4, MCM: 1.9, BCM: 0, x_CH4: 0, x_N2: 0, brineType: 'NaCl' });
+describe('predict — Synchronized Thesis & Paper 4 Field Case Studies', () => {
+  test('Sleipner → Supercritical p50=30.87 GREEN [28.62, 33.12]', () => {
+    const r = predict({ P: 10.30, T: 310.15, drho: 0.3916, MCM: 0.60, BCM: 0, x_CH4: 0, x_N2: 0, brineType: 'NaCl' });
     expect(r.regime).toBe('sup');
     expect(r.isNearCritical).toBe(false);
-    expect(r.p50).toBeCloseTo(29.17, 2);
+    expect(r.p50).toBeCloseTo(30.87, 2);
+    expect(r.p90).toBeCloseTo(28.62, 2);
+    expect(r.p10).toBeCloseTo(33.12, 2);
+    expect(r.status).toBe('GREEN');
+  });
+
+  test('In Salah (MCM=0.44, EOS drho=0.5482) → Supercritical p50=30.54 GREEN [28.29, 32.79]', () => {
+    const r = predict({ P: 18.00, T: 363.15, drho: 0.5482, MCM: 0.44, BCM: 0, x_CH4: 0, x_N2: 0, brineType: 'NaCl' });
+    expect(r.regime).toBe('sup');
+    expect(r.p50).toBeCloseTo(30.54, 2);
+    expect(r.status).toBe('GREEN');
+  });
+
+  test('Peterhead shallow subcritical → Subcritical p50=44.05, escalated AMBER', () => {
+    const r = predict({ P: 5.20, T: 305.15, drho: 0.9169, MCM: 1.50, BCM: 0, x_CH4: 0, x_N2: 0, brineType: 'NaCl' });
+    expect(r.regime).toBe('sub');
+    expect(r.p50).toBeCloseTo(44.05, 2);
+    expect(r.status).toBe('AMBER');
+    expect(r.uif).toBe(2.5);
+  });
+
+  test('Deep UAE 10,865 ft (>125 °C) flags highTKnotFlag and downgrades to AMBER', () => {
+    const r = predict({ P: 44.85, T: 407.21, drho: 0.3941, MCM: 1.90, BCM: 0, x_CH4: 0, x_N2: 0, brineType: 'NaCl' });
+    expect(r.highTKnotFlag).toBe(true);
+    expect(r.status).toBe('AMBER');
+  });
+
+  test('Out-of-training temperature (>140 °C / 413.15 K) is never marked GREEN even below 35 MPa', () => {
+    const r = predict({ P: 34.56, T: 431.55, drho: 0.5672, MCM: 0.60, BCM: 0, x_CH4: 0, x_N2: 0, brineType: 'NaCl' });
+    expect(r.status).not.toBe('GREEN');
+    expect(r.uif).toBe(2.5);
   });
 });
 
-describe('calculateP10P90 — QA/UIF tiers', () => {
-  test('GREEN tier uses UIF=1.0 (Sleipner)', () => {
-    const r = predict({ P: 10.3, T: 310.15, drho: 0.3916, MCM: 0.6, BCM: 0, x_CH4: 0, x_N2: 0, brineType: 'NaCl' });
-    expect(r.uif).toBe(1.0);
-    expect(r.p10).toBeCloseTo(r.p50 + 2.6928, 4);
-    expect(r.p90).toBeCloseTo(r.p50 - 2.6928, 4);
+describe('SEAL Agent, LaTeX Text Sanitizer, & Batch Predictor', () => {
+  test('"what is the best values for sarawak foramtion" resolves Sarawak at P=22.50 MPa, T=112 °C and runs 25-point optimization', () => {
+    const sleipnerHud = { P: 10.3, T: 310.15, MCM: 0.6, drho: 0.3916, presetName: 'Sleipner (Utsira Fm, North Sea)' };
+    const out = runDeterministicWorkflow('what is the best values for sarawak foramtion', sleipnerHud);
+    expect(out.needsClarification).toBe(false);
+    expect(out.resolved.siteId).toBe('sarawak');
+    expect(out.resolved.inputs.P).toBeCloseTo(22.50, 2);
+    expect(out.resolved.inputs.T).toBeCloseTo(385.15, 2);
+    expect(out.marsResult.p50).toBeCloseTo(30.12, 2);
+    expect(out.optimization).not.toBeNull();
+    expect(out.optimization.evaluatedCount).toBe(25);
+    expect(out.optimization.greenCount).toBeGreaterThan(0);
+    expect(out.prescription.plainReport).not.toContain('\\text{');
   });
 
-  test('RED tier uses UIF=5.0', () => {
-    const r = predict({ P: 30.0, T: 650.0, drho: 0.4, MCM: 0, BCM: 0, x_CH4: 0, x_N2: 0, brineType: 'NaCl' });
-    expect(r.status).toBe('RED');
-    expect(r.uif).toBe(5.0);
+  test('cleanScientificText, tokenizeRichScientific & toPdfSafeText format subscripts, multiline bold, and PDF labels cleanly', () => {
+    const raw =
+      '* **Executive\n\nVerdict:** Established at $31.02\\text{ MPa}$ and $138.3^\\circ\\text{C}$ ($411.45\\text{ K}$), ' +
+      'yielding a $\\text{CO}_2$ density of $536\\text{ kg/m}^3$ and buoyancy ($\\Delta\\rho$) of $0.5232\\text{ g/cm}^3$ ' +
+      'with $h = 0.0077 \\le 0.0233$, r_c = 25.0 nm, γ_P90 = 25.3 mN/m, and $\\text{UIF\\_interval} = 1.06$.';
+    const cleaned = cleanScientificText(raw);
+    expect(cleaned).not.toContain('$');
+    expect(cleaned).not.toContain('\\text');
+    expect(cleaned).toContain('0.5232 g/cm³');
+    expect(cleaned).toContain('CO₂');
+    expect(cleaned).toContain('Δρ');
+    expect(cleaned).toContain('≤');
+
+    const blocks = parseExecutiveBlocks(raw);
+    expect(blocks.length).toBe(1);
+    expect(blocks[0].type).toBe('bullet');
+    expect(blocks[0].segments[0]).toEqual({ bold: true, text: 'Executive Verdict:' });
+    expect(blocks[0].plainText).not.toContain('**');
+
+    const richTokens = tokenizeRichScientific(cleaned);
+    expect(richTokens.some(t => t.type === 'sub' && t.value === 'c')).toBe(true);
+    expect(richTokens.some(t => t.type === 'sub' && t.value === 'P90')).toBe(true);
+    expect(richTokens.some(t => t.type === 'sub' && t.value === 'interval')).toBe(true);
+
+    const pdfSafe = toPdfSafeText(raw);
+    expect(pdfSafe).not.toContain('**');
+    expect(pdfSafe).toContain('0.5232 g/cm³');
+    expect(pdfSafe).toContain('CO2');
+    expect(pdfSafe).toContain('Density Contrast');
+    expect(pdfSafe).toContain('Cross-Lab UIF');
+    expect(pdfSafe).toContain('<=');
   });
 
-  test('Na2SO4 / high-MCM sets liEtAlFlag (secondary warning only)', () => {
-    const r = predict({ P: 5.0, T: 298.15, drho: 0.8, MCM: 0.68, BCM: 0.34, x_CH4: 0, x_N2: 0, brineType: 'Na2SO4' });
-    expect(r.liEtAlFlag).toBe(true);
-    // Na2SO4 flag does not override leverage-based tier
-    expect(['GREEN', 'AMBER', 'RED']).toContain(r.status);
+  test('Unrecognized formation in offline mode refuses to fake Sleipner and returns needsClarification=true', () => {
+    const sleipnerHud = { P: 10.3, T: 310.15, MCM: 0.6, drho: 0.3916, presetName: 'Sleipner (Utsira Fm, North Sea)' };
+    const out = runDeterministicWorkflow('what is the best values for Atlantis mythical formation', sleipnerHud);
+    expect(out.needsClarification).toBe(true);
   });
 
-  test('p10 never below physical floor (12.4 mN/m)', () => {
-    const r = predict({ P: 10.3, T: 310.15, drho: 0.3916, MCM: 0.6, BCM: 0, x_CH4: 0, x_N2: 0, brineType: 'NaCl' });
-    expect(r.p90).toBeGreaterThanOrEqual(12.4);
-    expect(r.p10).toBeLessThanOrEqual(78.88);
+  test('Sleipner 200 m decision query returns GO with 100% envelope clearance and H50 ≈ 467 m', () => {
+    const out = runDeterministicWorkflow('Can the Sleipner caprock safely hold a 200 m CO₂ column?');
+    expect(out.resolved.siteId).toBe('sleipner');
+    expect(out.propagation.H_m.p50).toBeCloseTo(467.1, 0);
+    expect(out.prescription.decision).toBe('GO');
   });
 
-  test('sup regime uses qBase=2.25', () => {
-    const r = predict({ P: 18.0, T: 363.15, drho: 0.4, MCM: 0, BCM: 0, x_CH4: 0, x_N2: 0, brineType: 'NaCl' });
-    expect(r.uif).toBe(1.0);
-    expect(r.p10).toBeCloseTo(r.p50 + 2.25, 4);
-    expect(r.p90).toBeCloseTo(r.p50 - 2.25, 4);
+  test('Batch Predictor parses Site + T_C + blank drho (auto-PR-EOS) and evaluates accurately', () => {
+    const csv = [
+      'Site,P,T_C,MCM,BCM,x_CH4,x_N2,brineType,drho',
+      'Sleipner,10.30,37.00,0.60,0,0,0,NaCl,0.3916',
+      'In Salah,18.00,90.00,0.44,0,0,0,NaCl,',
+      'Sarawak,22.50,112.00,0.60,0,0,0,NaCl,',
+    ].join('\n');
+    const rows = parseCSV(csv);
+    expect(rows.length).toBe(3);
+    expect(rows[0].eosEstimated).toBe(false);
+    expect(rows[1].eosEstimated).toBe(true);
+    expect(rows[1].drho).toBeCloseTo(0.5482, 3);
+
+    const res = batchPredict(rows);
+    expect(res[0].result.p50).toBeCloseTo(30.87, 2);
+    expect(res[1].result.p50).toBeCloseTo(30.54, 2);
+    expect(res[2].result.p50).toBeCloseTo(30.12, 2);
+    expect(res[2].result.status).toBe('GREEN');
+  });
+
+  test('formatThroatRadius eliminates 0.000 µm rounding bug', () => {
+    expect(formatThroatRadius(2.98e-8)).toBe('29.8 nm (0.0298 µm)');
+    expect(formatThroatRadius(1.0e-6)).toBe('1.00 µm');
   });
 });

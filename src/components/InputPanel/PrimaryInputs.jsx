@@ -1,8 +1,8 @@
 import React from 'react'
 
 const FIELDS = [
-  { key: 'P',     label: 'Pressure',             unit: 'MPa',     min: 0.1,  max: 60,   step: 0.5 },
-  { key: 'T',     label: 'Temperature',           unit: 'K',       min: 273,  max: 500,  step: 1   },
+  { key: 'P',     label: 'Pressure',             unit: 'MPa',     min: 0.1,  max: 70,   step: 0.5 },
+  { key: 'T',     label: 'Temperature',           unit: 'K',       min: 273,  max: 473,  step: 1   },
   { key: 'drho',  label: 'Density diff (Δρ)',     unit: 'g/cm³',   min: 0.001, max: 1.1, step: 0.001 },
   { key: 'MCM',   label: 'Monovalent Cation Mol.', unit: 'mol/kg', min: 0,    max: 6,    step: 0.05 },
   { key: 'BCM',   label: 'Bivalent Cation Mol.',  unit: 'mol/kg',  min: 0,    max: 2,    step: 0.01 },

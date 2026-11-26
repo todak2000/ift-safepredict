@@ -48,13 +48,13 @@ export function tLabel(unit) {
 
 export function pMinMax(unit) {
   const min = pFromSI(0.1, unit)
-  const max = pFromSI(60, unit)
+  const max = pFromSI(70, unit)
   const step = unit === 'psi' ? 10 : unit === 'bar' ? 0.5 : 0.5
   return { min: +min.toFixed(2), max: +max.toFixed(1), step }
 }
 
 export function tMinMax(unit) {
-  if (unit === 'C') return { min: 0, max: 227, step: 1 }
-  if (unit === 'F') return { min: 32, max: 440, step: 1 }
-  return { min: 273, max: 500, step: 1 }
+  if (unit === 'C') return { min: 0, max: 200, step: 1 }
+  if (unit === 'F') return { min: 32, max: 392, step: 1 }
+  return { min: 273, max: 473, step: 1 }
 }

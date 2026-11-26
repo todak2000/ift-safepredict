@@ -147,10 +147,9 @@ P_r &= \\frac{P}{P_{c,\\mathrm{mix}}}, \\qquad T_r = \\frac{T}{T_{c,\\mathrm{mix
 \\end{aligned}`
 
 const EQ_REGIME = `\\text{Regime} = \\begin{cases}
-\\text{Supercritical} & \\text{if } P_r \\geq 1 \\text{ and } T_r \\geq 1 \\\\[4pt]
-\\text{Near-critical} & \\text{if } \\left|P_r - 1\\right| \\leq 0.02 \\text{ or } \\left|T_r - 1\\right| \\leq 0.02 \\\\[4pt]
-\\text{Subcritical} & \\text{otherwise}
-\\end{cases}`
+\\text{Supercritical (35-term)} & \\text{if } P_r \\geq 1 \\text{ and } T_r \\geq 1 \\\\[4pt]
+\\text{Subcritical (16-term)} & \\text{otherwise}
+\\end{cases}, \\qquad \\text{Near-critical flag: } |T - T_{c,\\mathrm{mix}}| \\le 2.0\\;\\text{K} \\;\\land\\; |P - P_{c,\\mathrm{mix}}| \\le 0.5\\;\\text{MPa}`
 
 const EQ_HINGE = `h^{+}(u,\\;k) = \\max(0,\\;u - k), \\qquad h^{-}(u,\\;k) = \\max(0,\\;k - u)`
 
@@ -219,24 +218,23 @@ const EQ_SUP_MARS_B = `\\begin{aligned}
 \\end{aligned}`
 
 const EQ_UQ = `\\begin{aligned}
-\\hat{\\gamma}_{P_{10}} &= \\hat{\\gamma}_{P_{50}} - \\delta_{\\mathrm{base}} \\cdot \\psi \\\\[6pt]
-\\hat{\\gamma}_{P_{90}} &= \\hat{\\gamma}_{P_{50}} + \\delta_{\\mathrm{base}} \\cdot \\psi \\\\[8pt]
+\\hat{\\gamma}_{P_{10}} &= \\hat{\\gamma}_{P_{50}} + \\delta_{\\mathrm{base}} \\cdot \\psi \\\\[6pt]
+\\hat{\\gamma}_{P_{90}} &= \\hat{\\gamma}_{P_{50}} - \\delta_{\\mathrm{base}} \\cdot \\psi \\\\[8pt]
 \\delta_{\\mathrm{base}} &= \\begin{cases}
   2.6928\\;\\text{mN/m} & \\text{(subcritical)} \\\\
-  2.25\\;\\text{mN/m} & \\text{(supercritical)}
+  2.2507\\;\\text{mN/m} & \\text{(supercritical)}
 \\end{cases} \\\\[8pt]
 \\psi &= \\begin{cases}
   1.00 & \\text{GREEN} \\quad h \\le h^* \\\\
   \\psi_{\\mathrm{UIF}} & \\text{AMBER} \\quad h^* < h \\le 3h^*\\;(\\psi_{\\mathrm{UIF}} = 3.59\\;\\text{sub},\\;1.06\\;\\text{sup}) \\\\
-  5.00 & \\text{RED} \\quad h > 3h^*
+  2.50 & \\text{RED} \\quad h > 3h^*
 \\end{cases}
 \\end{aligned}`
 
 const EQ_EOS_CO2 = `\\begin{aligned}
-B_0 &= 0.083 - \\frac{0.422}{T_r^{1.6}}, \\qquad
-B_1 = 0.139 - \\frac{0.172}{T_r^{4.2}} \\\\[6pt]
-Z &= \\max\\!\\left(0.2,\\; 1 + \\frac{(B_0 + \\omega_{\\mathrm{CO}_2}\\,B_1)\\,P_r}{T_r}\\right) \\\\[6pt]
-\\rho_{\\mathrm{CO}_2} &= \\frac{P\\,M_{\\mathrm{CO}_2}}{Z\\,R\\,T}
+Z^3 &- (1 - B)Z^2 + (A - 3B^2 - 2B)Z - (AB - B^2 - B^3) = 0 \\\\[6pt]
+\\alpha(T_r) &= \\bigl[1 + (0.37464 + 1.54226\\,\\omega - 0.26992\\,\\omega^2)(1 - \\sqrt{T_r})\\bigr]^2 \\\\[6pt]
+\\rho_{\\mathrm{CO}_2} &= \\frac{M_{\\mathrm{mix}}}{\\dfrac{Z\\,R\\,T}{P} + c_{\\mathrm{shift}}}, \\qquad c_{\\mathrm{shift}}(\\mathrm{CO}_2) = -1.8\\;\\text{cm}^3\\text{/mol}
 \\end{aligned}`
 
 const EQ_EOS_BRINE = `\\begin{aligned}
@@ -437,14 +435,15 @@ export default function EquationsTab() {
       {/* ── Section 7: EOS Density Correlations ── */}
       <Section title="7 · Density Estimation (EOS Assist Panel)">
         <p style={{ fontSize: '0.78rem', color: 'var(--color-text-muted)', marginBottom: '0.75rem', lineHeight: 1.6 }}>
-          When <InlineMath latex="\Delta\rho" /> is estimated via the EOS Assist panel, CO₂
-          density uses the Pitzer–Curl virial equation (gas phase) or a polynomial fit (dense
-          phase), and brine density uses the Rowe-Chou (1970) correlation.
+          When <InlineMath latex="\Delta\rho" /> is estimated via the EOS engine, CO₂-rich
+          phase density uses the volume-translated Peng–Robinson (1976) cubic equation of state
+          (minimum-Gibbs-energy root, calibrated to NIST Span–Wagner across 0.1–70 MPa), and brine
+          density uses the Rowe-Chou (1970) correlation.
         </p>
         <EqBlock
-          label="CO₂ density — Pitzer–Curl virial equation"
+          label="CO₂ density — Volume-translated Peng–Robinson (1976) cubic EOS"
           latex={EQ_EOS_CO2}
-          note="ω(CO₂) = 0.239, M(CO₂) = 0.04401 kg/mol, R = 8.314 J mol⁻¹ K⁻¹. For dense-phase CO₂ a clamped polynomial fit is used instead."
+          note="Tc(CO₂) = 304.13 K, Pc(CO₂) = 7.377 MPa, ω = 0.22394, R = 8.3145 J mol⁻¹ K⁻¹; MAE(Δρ) = 0.031 g/cm³ across 2,754 pure-CO₂ measurements."
         />
         <EqBlock
           label="Brine density — Rowe-Chou (1970) correlation"

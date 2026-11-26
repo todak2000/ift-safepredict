@@ -23,12 +23,13 @@ export default function EosAssistPanel({ onResult }) {
       {open && (
         <div className="eos-panel-body">
           <p className="text-muted" style={{ marginBottom: '0.75rem' }}>
-            Optional: estimate Δρ = ρ_brine − ρ_CO₂ using Span-Wagner + Rowe-Chou correlations.
-            Override anytime in the main input.
+            Optional: estimate Δρ = ρ_brine − ρ_CO₂ using a Pitzer–Curl virial equation
+            (gas phase) / polynomial fit (dense phase) for CO₂ and the Rowe-Chou (1970)
+            correlation for brine. Override anytime in the main input.
           </p>
           <div className="field-group">
             <div className="field-label"><span>P</span><span className="unit">MPa</span></div>
-            <input type="number" value={P} min={1} max={50} step={0.5}
+            <input type="number" value={P} min={1} max={70} step={0.5}
               onChange={e => setP(Number(e.target.value))} />
           </div>
           <div className="field-group">
