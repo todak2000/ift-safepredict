@@ -57,9 +57,14 @@ export default function PredictionDisplay({ result, inputs, unitSystem, onOpenAg
   const handleCSV = () => exportCSV(fullInputs, result, regime)
   const handlePDF = () => exportPDF(fullInputs, result, regime)
 
-  const intervalLabel = uif > 1.0
-    ? `Escalated Interval [${p90.toFixed(2)}, ${p10.toFixed(2)}] mN/m (UIF ${uif.toFixed(2)}× · Calib 80%: [${calibP90.toFixed(2)}, ${calibP10.toFixed(2)}])`
-    : `80% Conformal Interval [${p90.toFixed(2)}, ${p10.toFixed(2)}] mN/m (±${(result.halfWidth ?? 2.25).toFixed(2)} mN/m)`
+  const uifPortability = result.uifPortability ?? uif
+  const intervalLabel = uif > 1.0 ? (
+    <>
+      {uif.toFixed(1)}&times; escalated screening interval{uif >= 2.5 ? ' (capped)' : ''}: [{p90.toFixed(2)}, {p10.toFixed(2)}] mN/m (UIF<sub>interval</sub> = {uifPortability.toFixed(2)} &middot; Calib 80%: [{calibP90.toFixed(2)}, {calibP10.toFixed(2)}])
+    </>
+  ) : (
+    <>80% Conformal Interval [{p90.toFixed(2)}, {p10.toFixed(2)}] mN/m (&plusmn;{(result.halfWidth ?? 2.25).toFixed(2)} mN/m)</>
+  )
 
   return (
     <div className="hero-hud-card">
@@ -109,13 +114,13 @@ export default function PredictionDisplay({ result, inputs, unitSystem, onOpenAg
 
       <div className="hero-percentile-grid">
         <div className="hud-tile">
-          <div className="hud-tile-tag">P90 Conservative (Low γ)</div>
+          <div className="hud-tile-tag">P90 Conservative <span style={{ textTransform: 'none' }}>(low γ)</span></div>
           <div className="hud-tile-value mono">{p90.toFixed(2)}</div>
           <div className="hud-tile-unit">mN/m</div>
         </div>
 
         <div className="hud-tile hud-tile--p50">
-          <div className="hud-tile-tag">P50 Expected IFT (γ)</div>
+          <div className="hud-tile-tag">P50 Expected IFT <span style={{ textTransform: 'none' }}>(γ)</span></div>
           <div className="hud-tile-value mono">
             {p50.toFixed(2)}
           </div>
@@ -123,7 +128,7 @@ export default function PredictionDisplay({ result, inputs, unitSystem, onOpenAg
         </div>
 
         <div className="hud-tile">
-          <div className="hud-tile-tag">P10 Optimistic (High γ)</div>
+          <div className="hud-tile-tag">P10 Optimistic <span style={{ textTransform: 'none' }}>(high γ)</span></div>
           <div className="hud-tile-value mono">{p10.toFixed(2)}</div>
           <div className="hud-tile-unit">mN/m</div>
         </div>

@@ -459,7 +459,7 @@ export const exportAssuranceBriefPDF = async (report) => {
         ),
       ],
       [
-        '5-Gate Composite Trust',
+        'Composite Trust Audit',
         toPdfSafeText(
           `${report.audit.compositeVerdict} | Model: ${report.prescription.eqCited} | Leverage h = ${report.audit.leverageH} (h* = ${report.audit.leverageThreshold}) | Cross-Lab UIF = ${report.audit.uifPortability.toFixed(2)}`
         ),
@@ -539,7 +539,7 @@ export const exportAssuranceBriefPDF = async (report) => {
     startY: y,
     margin: TABLE_MARGIN,
     head: [['Horizon', 'Pressure (MPa)', 'Temp (°C)', 'Density Contrast (g/cm³)', 'MARS [P90, P10]', 'MARS P50', 'Verdict']],
-    body: report.envelope.slices.filter((_, idx) => idx % 2 === 0).map(s => [
+    body: report.envelope.slices.map(s => [
       toPdfSafeText(s.label),
       s.P.toFixed(2),
       (s.T - 273.15).toFixed(1),

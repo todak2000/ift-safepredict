@@ -14,7 +14,8 @@ const STATUS_COLORS = {
   RED:    'rgba(244, 63, 94,',
 }
 
-export default function UncertaintyChart({ result, history }) {
+export default function UncertaintyChart({ result, history, theme = 'light' }) {
+  const isLight = theme === 'light'
   const chartData = useMemo(() => {
     if (!history || history.length === 0) return null
 
@@ -48,7 +49,7 @@ export default function UncertaintyChart({ result, history }) {
           borderWidth: 2,
           pointRadius: 3.5,
           pointHoverRadius: 6,
-          pointBackgroundColor: '#04070D',
+          pointBackgroundColor: isLight ? '#ffffff' : '#04070D',
           pointBorderWidth: 2,
         },
         {
@@ -56,13 +57,13 @@ export default function UncertaintyChart({ result, history }) {
           data: p90s,
           fill: '-1',
           borderColor: 'transparent',
-          backgroundColor: `${colorBase}0.12)`,
+          backgroundColor: `${colorBase}0.16)`,
           tension: 0.35,
           pointRadius: 0,
         },
       ],
     }
-  }, [history])
+  }, [history, isLight])
 
   const options = {
     responsive: true,
@@ -70,11 +71,11 @@ export default function UncertaintyChart({ result, history }) {
     plugins: {
       legend: {
         labels: {
-          color: '#94a3b8',
-          font: { family: 'Inter', size: 11, weight: 500 },
+          color: isLight ? '#1e293b' : '#cbd5e1',
+          font: { family: 'Inter', size: 11.5, weight: 600 },
           usePointStyle: true,
           pointStyle: 'circle',
-          boxWidth: 6,
+          boxWidth: 7,
         },
         position: 'top',
         align: 'end',
@@ -95,15 +96,15 @@ export default function UncertaintyChart({ result, history }) {
     },
     scales: {
       x: {
-        ticks: { color: '#64748b', font: { family: 'JetBrains Mono', size: 10 } },
-        grid: { color: 'rgba(255, 255, 255, 0.04)' },
-        border: { color: 'rgba(255, 255, 255, 0.08)' },
+        ticks: { color: isLight ? '#334155' : '#cbd5e1', font: { family: 'JetBrains Mono', size: 11, weight: 500 } },
+        grid: { color: isLight ? 'rgba(15, 23, 42, 0.08)' : 'rgba(255, 255, 255, 0.06)' },
+        border: { color: isLight ? 'rgba(15, 23, 42, 0.18)' : 'rgba(255, 255, 255, 0.12)' },
       },
       y: {
-        title: { display: true, text: 'IFT (mN/m)', color: '#94a3b8', font: { family: 'Inter', size: 11 } },
-        ticks: { color: '#64748b', font: { family: 'JetBrains Mono', size: 10 } },
-        grid: { color: 'rgba(255, 255, 255, 0.04)' },
-        border: { color: 'rgba(255, 255, 255, 0.08)' },
+        title: { display: true, text: 'IFT (mN/m)', color: isLight ? '#1e293b' : '#cbd5e1', font: { family: 'Inter', size: 11.5, weight: 600 } },
+        ticks: { color: isLight ? '#334155' : '#cbd5e1', font: { family: 'JetBrains Mono', size: 11, weight: 500 } },
+        grid: { color: isLight ? 'rgba(15, 23, 42, 0.08)' : 'rgba(255, 255, 255, 0.06)' },
+        border: { color: isLight ? 'rgba(15, 23, 42, 0.18)' : 'rgba(255, 255, 255, 0.12)' },
         min: 0,
       },
     },

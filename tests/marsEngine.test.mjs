@@ -6,7 +6,7 @@ import { scaleFeatures, minMaxScale, DOMAIN_BOUNDS } from '../src/logic/scalers.
 import { computeADStatus } from '../src/logic/qaValidator.js';
 import { H_STAR } from '../src/logic/hatMatrix.js';
 import { co2Density, computeDrho } from '../src/logic/eosEngine.js';
-import { runDeterministicWorkflow } from '../src/logic/agentEngine.js';
+import { runDeterministicWorkflow, sanitizeExecutiveNarrative } from '../src/logic/agentEngine.js';
 import { formatThroatRadius } from '../src/logic/presetsData.js';
 import { parseCSV, batchPredict } from '../src/logic/batchPredict.js';
 import { cleanScientificText, parseExecutiveBlocks, toPdfSafeText, tokenizeRichScientific } from '../src/logic/formatText.js';
@@ -76,14 +76,19 @@ describe('marsEngine & hatMatrix', () => {
 });
 
 describe('predict — Synchronized Thesis & Paper 4 Field Case Studies', () => {
-  test('Sleipner → Supercritical p50=30.87 GREEN [28.62, 33.12]', () => {
+  test('Sleipner → Supercritical p50=30.87 GREEN [28.62, 33.12] and boundary-adjacent regime label', () => {
     const r = predict({ P: 10.30, T: 310.15, drho: 0.3916, MCM: 0.60, BCM: 0, x_CH4: 0, x_N2: 0, brineType: 'NaCl' });
     expect(r.regime).toBe('sup');
     expect(r.isNearCritical).toBe(false);
+    expect(r.isBoundaryAdjacent).toBe(true);
     expect(r.p50).toBeCloseTo(30.87, 2);
     expect(r.p90).toBeCloseTo(28.62, 2);
     expect(r.p10).toBeCloseTo(33.12, 2);
     expect(r.status).toBe('GREEN');
+    expect(r.uifPortability).toBeCloseTo(1.06, 2);
+    const regChk = r.checks.find(c => c.id === 'regime');
+    expect(regChk.detail).toContain('boundary-adjacent');
+    expect(regChk.detail).not.toContain('unambiguous');
   });
 
   test('In Salah (MCM=0.44, EOS drho=0.5482) → Supercritical p50=30.54 GREEN [28.29, 32.79]', () => {
@@ -93,12 +98,18 @@ describe('predict — Synchronized Thesis & Paper 4 Field Case Studies', () => {
     expect(r.status).toBe('GREEN');
   });
 
-  test('Peterhead shallow subcritical → Subcritical p50=44.05, escalated AMBER', () => {
+  test('Peterhead shallow subcritical → Subcritical p50=44.05, 2.5× escalated screening interval (capped), UIF 3.59 Red band → AMBER', () => {
     const r = predict({ P: 5.20, T: 305.15, drho: 0.9169, MCM: 1.50, BCM: 0, x_CH4: 0, x_N2: 0, brineType: 'NaCl' });
     expect(r.regime).toBe('sub');
     expect(r.p50).toBeCloseTo(44.05, 2);
     expect(r.status).toBe('AMBER');
     expect(r.uif).toBe(2.5);
+    expect(r.uifPortability).toBeCloseTo(3.59, 2);
+    expect(r.message).toContain('2.5× escalated screening interval (capped)');
+    expect(r.message).not.toContain('95% PI');
+    const portChk = r.checks.find(c => c.id === 'portability');
+    expect(portChk.detail).toContain('Red band');
+    expect(portChk.detail).toContain('capped at 2.5×');
   });
 
   test('Deep UAE 10,865 ft (>125 °C) flags highTKnotFlag and downgrades to AMBER', () => {
@@ -168,11 +179,27 @@ describe('SEAL Agent, LaTeX Text Sanitizer, & Batch Predictor', () => {
     expect(out.needsClarification).toBe(true);
   });
 
-  test('Sleipner 200 m decision query returns GO with 100% envelope clearance and H50 ≈ 467 m', () => {
+  test('Sleipner 200 m decision query resolves Nordland Shale caprock, 11 horizons, zero MICP claims, and sanitizes LLM terminology', () => {
     const out = runDeterministicWorkflow('Can the Sleipner caprock safely hold a 200 m CO₂ column?');
     expect(out.resolved.siteId).toBe('sleipner');
+    expect(out.resolved.rock.sealName).toBe('Nordland Shale caprock');
+    expect(out.envelope.slices.length).toBe(11);
     expect(out.propagation.H_m.p50).toBeCloseTo(467.1, 0);
     expect(out.prescription.decision).toBe('GO');
+    expect(out.prescription.nextAction).not.toContain('MICP');
+    expect(out.trace[4].title).toBe('Capillary Seal Propagation (Young\u2013Laplace)');
+
+    const badDraft =
+      'The Utsira shale caprock can safely hold a 200 m column with IFT supporting a pore throat radius of 29.8 nm; DNV-RP-J203 audit reports GREEN within certified domain.';
+    const sanitized = sanitizeExecutiveNarrative(badDraft, out);
+    expect(sanitized).toContain('Nordland Shale caprock');
+    expect(sanitized).not.toMatch(/Utsira shale/i);
+    expect(sanitized).toContain('composite trust audit');
+    expect(sanitized).not.toMatch(/DNV-RP-J203 audit/i);
+    expect(sanitized).toContain('passes the static screening check for');
+    expect(sanitized).not.toMatch(/can safely hold/i);
+    expect(sanitized).toContain('assumed input pore-throat radius');
+    expect(sanitized).not.toMatch(/certified/i);
   });
 
   test('Batch Predictor parses Site + T_C + blank drho (auto-PR-EOS) and evaluates accurately', () => {

@@ -62,7 +62,7 @@ export default function StorageEstimator({ result }) {
               <span className="param-label">Reservoir Extent</span>
               <span className="param-val-pill mono">{area} km²</span>
             </div>
-            <input type="number" value={area} min={1} max={10000} step={10} onChange={e => setArea(+e.target.value)} />
+            <input type="number" value={area} min={1} max={10000} step="any" onChange={e => setArea(+e.target.value)} />
           </div>
 
           <div className="param-group">
@@ -70,7 +70,7 @@ export default function StorageEstimator({ result }) {
               <span className="param-label">Net Formation Thickness</span>
               <span className="param-val-pill mono">{thickness} m</span>
             </div>
-            <input type="number" value={thickness} min={1} max={500} step={5} onChange={e => setThickness(+e.target.value)} />
+            <input type="number" value={thickness} min={1} max={500} step="any" onChange={e => setThickness(+e.target.value)} />
           </div>
 
           <div className="param-group">
@@ -78,15 +78,15 @@ export default function StorageEstimator({ result }) {
               <span className="param-label">Average Porosity (φ)</span>
               <span className="param-val-pill mono">{porosity} frac</span>
             </div>
-            <input type="number" value={porosity} min={0.01} max={0.4} step={0.01} onChange={e => setPorosity(+e.target.value)} />
+            <input type="number" value={porosity} min={0.01} max={0.4} step="any" onChange={e => setPorosity(+e.target.value)} />
           </div>
 
           <div className="param-group">
             <div className="param-header">
-              <span className="param-label">Supercritical CO₂ Density</span>
+              <span className="param-label">CO₂ Density</span>
               <span className="param-val-pill mono">{rhoCO2} kg/m³</span>
             </div>
-            <input type="number" value={rhoCO2} min={100} max={1200} step={10} onChange={e => setRhoCO2(+e.target.value)} />
+            <input type="number" value={rhoCO2} min={100} max={1200} step="any" onChange={e => setRhoCO2(+e.target.value)} />
           </div>
         </div>
 

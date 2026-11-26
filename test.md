@@ -135,11 +135,11 @@ P,T,salinity,MCM,BCM,x_CH4,x_N2,brineType
 
 ## 13. Input Validation
 
-- [ ] **P out of domain**: Set P=70 → ⚠ icon on Pressure field, "Domain: 0.1–60 MPa" hint
+- [ ] **P out of domain**: Set P=80 → ⚠ icon on Pressure field, "Domain: 0.1–70 MPa" hint
 - [ ] **T out of domain**: Set T=550K (or 277°C) → ⚠ on Temperature field
 - [ ] **Yellow border**: Out-of-domain fields get yellow border
 - [ ] **Still predicts**: Prediction still runs (QA shows RED for extrapolation)
-- [ ] **Unit-aware**: Switch to bar → domain shows in bar (1–600 bar)
+- [ ] **Unit-aware**: Switch to bar → domain shows in bar (1–700 bar)
 
 ## 14. Export Features
 

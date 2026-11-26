@@ -1332,7 +1332,6 @@ input[type="range"]::-webkit-slider-thumb:hover {
 .batch-table th {
   background: var(--bg-elevated);
   font-weight: 700;
-  text-transform: uppercase;
   letter-spacing: 0.05em;
   font-size: 0.78rem;
   color: var(--text-muted);

@@ -18,8 +18,9 @@ const PARAMS = [
   { key: 'x_N2',   label: 'N₂ Impurity',             min: 0,   max: 0.7636, step: 0.005 },
 ]
 
-export default function SensitivityChart({ inputs }) {
+export default function SensitivityChart({ inputs, theme = 'light' }) {
   const [steps, setSteps] = useState(5)
+  const isLight = theme === 'light'
 
   const analysis = useMemo(() => {
     if (!inputs?.brineType) return null
@@ -107,10 +108,10 @@ export default function SensitivityChart({ inputs }) {
     plugins: {
       legend: {
         labels: {
-          color: '#94a3b8',
-          font: { family: 'Inter', size: 11, weight: 500 },
+          color: isLight ? '#1e293b' : '#cbd5e1',
+          font: { family: 'Inter', size: 11.5, weight: 600 },
           usePointStyle: true,
-          boxWidth: 6,
+          boxWidth: 7,
         },
         position: 'top',
         align: 'end',
@@ -130,15 +131,15 @@ export default function SensitivityChart({ inputs }) {
     },
     scales: {
       x: {
-        title: { display: true, text: 'Absolute IFT Delta (mN/m)', color: '#94a3b8', font: { family: 'Inter', size: 11 } },
-        ticks: { color: '#64748b', font: { family: 'JetBrains Mono', size: 10 } },
-        grid: { color: 'rgba(255, 255, 255, 0.04)' },
-        border: { color: 'rgba(255, 255, 255, 0.08)' },
+        title: { display: true, text: 'Absolute IFT Delta (mN/m)', color: isLight ? '#1e293b' : '#cbd5e1', font: { family: 'Inter', size: 11.5, weight: 600 } },
+        ticks: { color: isLight ? '#334155' : '#cbd5e1', font: { family: 'JetBrains Mono', size: 11, weight: 500 } },
+        grid: { color: isLight ? 'rgba(15, 23, 42, 0.08)' : 'rgba(255, 255, 255, 0.07)' },
+        border: { color: isLight ? 'rgba(15, 23, 42, 0.18)' : 'rgba(255, 255, 255, 0.15)' },
       },
       y: {
-        ticks: { color: '#E2E8F0', font: { family: 'Inter', size: 11 } },
+        ticks: { color: isLight ? '#0f172a' : '#e2e8f0', font: { family: 'Inter', size: 11.5, weight: 600 } },
         grid: { display: false },
-        border: { color: 'rgba(255, 255, 255, 0.08)' },
+        border: { color: isLight ? 'rgba(15, 23, 42, 0.18)' : 'rgba(255, 255, 255, 0.15)' },
       },
     },
   }

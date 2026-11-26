@@ -229,7 +229,7 @@ export default function AgentCopilot({ currentInputs, onApplyInputs }) {
             SEAL is auditing reservoir thermodynamics &amp; containment risk…
           </div>
           <div style={{ fontSize: '0.88rem', color: 'var(--text-muted)' }}>
-            Peng–Robinson EOS &rarr; Closed-Form MARS &rarr; 5-Gate Conformal Trust &rarr; MICP Seal Propagation
+            Peng–Robinson EOS &rarr; Closed-Form MARS &rarr; Composite Trust Audit &rarr; Capillary Seal Propagation
           </div>
         </div>
       )}
@@ -250,7 +250,7 @@ export default function AgentCopilot({ currentInputs, onApplyInputs }) {
           <div className="card">
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.55rem', marginBottom: '0.45rem', color: 'var(--green)', fontWeight: 700, fontSize: '0.94rem' }}>
               <ShieldCheck size={18} />
-              <span>2. 5-Gate Conformal Trust Audit</span>
+              <span>2. Composite Conformal Trust Audit</span>
             </div>
             <p style={{ fontSize: '0.88rem', color: 'var(--text-muted)', lineHeight: 1.6 }}>
               Evaluates closed-form 16-term / 35-term MARS equations and verifies Kay&apos;s phase regime, Hat-matrix leverage h*, ±2 °C near-critical exclusion, cross-laboratory UIF<sub>interval</sub> portability, and thermal training bounds.
@@ -263,7 +263,7 @@ export default function AgentCopilot({ currentInputs, onApplyInputs }) {
               <span>3. Operating Window &amp; PDF Brief</span>
             </div>
             <p style={{ fontSize: '0.88rem', color: 'var(--text-muted)', lineHeight: 1.6 }}>
-              Sweeps reservoir depth &amp; 25-state operating grids to identify GREEN (P*, T*) states within the validated domain, computes MICP caprock clearance odds, and exports a PDF Executive Brief.
+              Sweeps reservoir depth &amp; 25-state operating grids to identify GREEN (P*, T*) states within the validated domain, computes capillary seal clearance odds, and exports a PDF Executive Brief.
             </p>
           </div>
         </div>
@@ -320,44 +320,6 @@ export default function AgentCopilot({ currentInputs, onApplyInputs }) {
               </div>
             </div>
 
-            <div className="card">
-              <div className="card-title-row">
-                <div className="card-title-group">
-                  <span className="card-title">Formation Envelope Sweep (Crest &rarr; Base)</span>
-                  <span className="card-subtitle">Uncertainty explored across depth, P, T &amp; conformal quantiles</span>
-                </div>
-              </div>
-              <div className="batch-table-container">
-                <table className="batch-table">
-                  <thead>
-                    <tr>
-                      <th>Horizon</th>
-                      <th>P (MPa)</th>
-                      <th>T (°C)</th>
-                      <th><span style={{ textTransform: 'none' }}>Δρ (g/cm³)</span></th>
-                      <th>P90–P10 (mN/m)</th>
-                      <th>Trust</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {report.envelope.slices.filter((_, idx) => idx % 2 === 0).map((s, idx) => (
-                      <tr key={idx}>
-                        <td className="mono">{s.label}</td>
-                        <td className="mono">{s.P.toFixed(2)}</td>
-                        <td className="mono">{(s.T - 273.15).toFixed(1)}</td>
-                        <td className="mono">{s.drho.toFixed(3)}</td>
-                        <td className="mono">[{s.p90.toFixed(2)}, {s.p10.toFixed(2)}]</td>
-                        <td>
-                          <span className={`history-status ${s.status.toLowerCase()}`}>
-                            {s.status}
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
           </div>
 
           {/* Right Column: Verdict Banner, Optimization Card, SEAL Synthesis, & Session Gap Log */}
@@ -543,6 +505,48 @@ export default function AgentCopilot({ currentInputs, onApplyInputs }) {
                   </div>
                 </div>
               )}
+            </div>
+
+            {/* Formation Envelope Sweep — wide right column for all 11 slices */}
+            <div className="card">
+              <div className="card-title-row">
+                <div className="card-title-group">
+                  <span className="card-title">Formation Envelope Sweep (Crest &rarr; Base)</span>
+                  <span className="card-subtitle">Uncertainty explored across depth, P, T &amp; conformal quantiles</span>
+                </div>
+              </div>
+              <div className="batch-table-container">
+                <table className="batch-table">
+                  <thead>
+                    <tr>
+                      <th>Horizon</th>
+                      <th style={{ textTransform: 'none' }}>P (MPa)</th>
+                      <th style={{ textTransform: 'none' }}>T (°C)</th>
+                      <th style={{ textTransform: 'none' }}>Δρ (g/cm³)</th>
+                      <th style={{ textTransform: 'none' }}>P50 (mN/m)</th>
+                      <th style={{ textTransform: 'none' }}>P90–P10 (mN/m)</th>
+                      <th>Trust</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {report.envelope.slices.map((s, idx) => (
+                      <tr key={idx}>
+                        <td className="mono">{s.label}</td>
+                        <td className="mono">{s.P.toFixed(2)}</td>
+                        <td className="mono">{(s.T - 273.15).toFixed(1)}</td>
+                        <td className="mono">{s.drho.toFixed(3)}</td>
+                        <td className="mono">{s.p50.toFixed(2)}</td>
+                        <td className="mono">[{s.p90.toFixed(2)}, {s.p10.toFixed(2)}]</td>
+                        <td>
+                          <span className={`history-status ${s.status.toLowerCase()}`}>
+                            {s.status}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
 
             {/* Session-Scoped Active-Learning Gap Log */}

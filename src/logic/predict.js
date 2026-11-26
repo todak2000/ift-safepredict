@@ -138,6 +138,7 @@ export const predict = (userInputs) => {
     brineType,
     eosEstimated,
     isNearCritical,
+    isBoundaryAdjacent,
     p50Clipped,
     localCalibrated,
   };

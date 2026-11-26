@@ -100,6 +100,9 @@ export function resolveSiteOrDepth(spec = {}, fallbackInputs = null, allowFallba
   const capPreset = capKey ? CAP_PRESETS[capKey] : null;
 
   const rock = {
+    label: capPreset?.label || presetObj?.caprockLabel || 'Custom caprock',
+    sealName: capPreset?.sealName || presetObj?.sealName || 'Regional caprock seal',
+    rcBasis: capPreset?.rcBasis || 'assumed fixed pore-throat radius',
     trap: spec.trap || capPreset?.trap || presetObj?.trap || 'open',
     rcUm: spec.rcUm ?? capPreset?.rcUm ?? presetObj?.rcUm ?? 0.028,
     theta: spec.theta ?? capPreset?.theta ?? presetObj?.theta ?? 30,
@@ -454,7 +457,7 @@ export function prescribeEngineeringAction(resolved, marsResult, audit, envelope
   let primaryRisk = 'Low residual model variance within validated supercritical manifold.';
   let nextAction =
     `Proceed with ${resolved.siteName} screening using P90 conservative column bound (${prop.H_m.p90} m) ` +
-    `for DNV-RP-J203 containment risk documentation; confirm site-specific caprock MICP r_c (${prop.rcLabel}) on core plugs.`;
+    `for containment risk documentation; confirm site-specific caprock pore-throat radius r_c (${prop.rcLabel}) on core plugs before permitting.`;
   let logGap = false;
 
   if (audit.isNearCritical || envelope.nearCritSlices > 0) {
@@ -489,7 +492,7 @@ export function prescribeEngineeringAction(resolved, marsResult, audit, envelope
     nextAction =
       resolved.rock.trap === 'structural'
         ? `Distinguish passive buoyant capillary height (${prop.H_m.p90}–${prop.H_m.p10} m) from dynamic viscous plume invasion; couple MARS IFT bounds [${marsResult.p90.toFixed(2)}, ${marsResult.p10.toFixed(2)}] mN/m into multiphase reservoir simulation.`
-        : `Restrict maximum CO₂ plume thickness below ${prop.H_m.p90} m (P90 conservative limit) or verify finer caprock pore throats via core MICP.`;
+        : `Restrict maximum CO₂ plume thickness below ${prop.H_m.p90} m (P90 conservative limit) or verify finer caprock pore throats via core measurement.`;
   }
 
   if (optimization?.bestBalanced) {
@@ -508,7 +511,7 @@ export function prescribeEngineeringAction(resolved, marsResult, audit, envelope
     `- **Formation & Basis:** ${resolved.siteName} (${resolved.basisNote}) — P = ${resolved.inputs.P.toFixed(2)} MPa, T = ${(resolved.inputs.T - 273.15).toFixed(2)} °C (${resolved.inputs.T.toFixed(2)} K), ${resolved.inputs.brineType} (MCM = ${resolved.inputs.MCM}, BCM = ${resolved.inputs.BCM} mol/kg), Δρ = ${resolved.inputs.drho.toFixed(4)} g/cm³.`,
     `- **MARS Equation & Interval:** Evaluated via **${eqCited}**. Predicted IFT: **P90 = ${marsResult.p90.toFixed(2)}**, **P50 = ${marsResult.p50.toFixed(2)}**, **P10 = ${marsResult.p10.toFixed(2)} mN/m** (applied UIF = ${marsResult.uif.toFixed(2)}×).`,
     `- **Composite Trust Audit:** **${trust}** (Hat leverage h = ${audit.leverageH} / h* = ${audit.leverageThreshold}, cross-lab UIF_interval = ${audit.uifPortability.toFixed(2)}).`,
-    `- **Capillary Propagation (MICP r_c = ${prop.rcLabel}, θ = ${prop.thetaDeg}°):** Entry pressure P_c(P50) = ${prop.Pc_MPa.p50.toFixed(2)} MPa; static column height **P90 = ${prop.H_m.p90} m / P50 = ${prop.H_m.p50} m / P10 = ${prop.H_m.p10} m**${prop.M_Mt ? `; static patch capacity (${resolved.rock.areaKm2} km²): **${prop.M_Mt.p90} / ${prop.M_Mt.p50} / ${prop.M_Mt.p10} Mt**` : ''}.`,
+    `- **Capillary Propagation (r_c = ${prop.rcLabel}, θ = ${prop.thetaDeg}°, assumed fixed inputs):** Entry pressure P_c(P50) = ${prop.Pc_MPa.p50.toFixed(2)} MPa; static column height **P90 = ${prop.H_m.p90} m / P50 = ${prop.H_m.p50} m / P10 = ${prop.H_m.p10} m**${prop.M_Mt ? `; static patch capacity (${resolved.rock.areaKm2} km²): **${prop.M_Mt.p90} / ${prop.M_Mt.p50} / ${prop.M_Mt.p10} Mt**` : ''}.`,
     optimization
       ? `- **Optimal GREEN Operating Window:** P ∈ [${optimization.safeWindowP_MPa[0].toFixed(1)}, ${optimization.safeWindowP_MPa[1].toFixed(1)}] MPa, T ∈ [${optimization.safeWindowT_C[0].toFixed(1)}, ${optimization.safeWindowT_C[1].toFixed(1)}] °C; best storage-efficiency operating point at **P* = ${optimization.bestBalanced.P.toFixed(2)} MPa, T* = ${optimization.bestBalanced.T_C.toFixed(1)} °C** (IFT P50 = ${optimization.bestBalanced.p50} mN/m, conservative H90 = ${optimization.bestBalanced.H90} m).`
       : null,
@@ -664,7 +667,7 @@ function buildPipelineResult({
       step: 5,
       tool: 'propagateCapillaryAssurance',
       badge: `${propagation.clearancePct}% Clearance`,
-      title: 'MICP Caprock Seal Propagation',
+      title: 'Capillary Seal Propagation (Young\u2013Laplace)',
       detail: `r_c = ${propagation.rcLabel}, θ = ${propagation.thetaDeg}° → H_cap = ${propagation.H_m.p90} / ${propagation.H_m.p50} / ${propagation.H_m.p10} m (target ≥ ${targetColumnM} m)`,
     },
   ];
@@ -744,7 +747,7 @@ const GEMINI_TOOLS = [
       {
         name: 'evaluateAndOptimizeFormation',
         description:
-          'Executes the deterministic IFT-SafePredict Peng-Robinson EOS, closed-form MARS (Sub-16t/Sup-35t), 5-gate conformal trust, depth-envelope sweep, MICP capillary column propagation, and optional 25-point operating-window optimizer. Always call this tool first and NEVER invent any IFT or column numbers yourself. If the user names a geological formation not in siteId, infer realistic published reservoir P_MPa, T_C, MCM, BCM, rcUm, and basisNote from geological literature.',
+          'Executes the deterministic IFT-SafePredict Peng-Robinson EOS, closed-form MARS (Sub-16t/Sup-35t), composite conformal trust audit, depth-envelope sweep, Young-Laplace capillary column propagation, and optional 25-point operating-window optimizer. Always call this tool first and NEVER invent any IFT or column numbers yourself. If the user names a geological formation not in siteId, infer realistic published reservoir P_MPa, T_C, MCM, BCM, rcUm, and basisNote from geological literature.',
         parameters: {
           type: 'OBJECT',
           properties: {
@@ -776,7 +779,7 @@ const GEMINI_TOOLS = [
             BCM: { type: 'NUMBER', description: 'Bivalent cation molality (Ca2+ + Mg2+) in mol/kg. Set to 0 (NaCl-equivalent brine default) unless divalent salt is explicitly requested.' },
             x_CH4: { type: 'NUMBER', description: 'CH4 mole fraction in [0, 0.89]. Set to 0 (pure pipeline CO2 default) unless CH4 co-injection is explicitly mentioned.' },
             x_N2: { type: 'NUMBER', description: 'N2 mole fraction in [0, 0.76]. Set to 0 (pure pipeline CO2 default) unless N2 co-injection is explicitly mentioned.' },
-            rcUm: { type: 'NUMBER', description: 'Caprock MICP pore throat radius in micrometers (e.g. 0.025 for 25 nm shale seal; 1.0 for sandstone pay)' },
+            rcUm: { type: 'NUMBER', description: 'Caprock pore throat radius in micrometers (e.g. 0.025 for 25 nm shale seal; 1.0 for sandstone pay)' },
             theta: { type: 'NUMBER', description: 'CO2-brine-rock contact angle in degrees (typically 30–40)' },
             trap: { type: 'STRING', description: '"open" for caprock seal integrity or "structural" for closed trap capacity' },
           },
@@ -835,6 +838,25 @@ async function callGeminiModelCascade(apiKey, payload, preferredModel = null) {
 }
 
 /**
+ * Deterministic post-processor guaranteeing executive synthesis obeys geological,
+ * physical-causality, and screening-assurance terminology rules.
+ */
+export function sanitizeExecutiveNarrative(rawText = '', activeRun = null) {
+  if (!rawText) return '';
+  const sealName = activeRun?.resolved?.rock?.sealName || 'Nordland Shale caprock';
+  return rawText
+    .replace(/\bUtsira\s+shale(?:\s+caprock)?\b/gi, sealName)
+    .replace(/\bDNV-RP-J203\s+(?:trust\s+|compliance\s+|containment\s+)?audit\b/gi, 'composite trust audit')
+    .replace(/\b5-gate\s+(?:conformal\s+|composite\s+)?(?:trust\s+)?audit\b/gi, 'composite trust audit')
+    .replace(/\b(?:supports|supporting)\s+(?:a\s+|an\s+)?(?:caprock\s+)?pore[- ]throat\s+radius\s+(?:of\s+)?/gi, 'combined with an assumed input pore-throat radius of ')
+    .replace(/\bcan\s+safely\s+(?:hold|contain)\b/gi, 'passes the static screening check for')
+    .replace(/\bsafely\s+(?:holds|contains)\b/gi, 'passes the static screening check for')
+    .replace(/\bcertified\s+(?:safe\s+|operating\s+)?(domain|states?|window|verdict)\b/gi, 'validated $1')
+    .replace(/\bcertified\b/gi, 'screened')
+    .replace(/\bregulatory-grade\b/gi, 'screening-grade');
+}
+
+/**
  * Run Hybrid Agentic Workflow: uses Google AI Studio (`gemini-3.8-flash` / `gemini-flash-latest`)
  * when an API key is available, strictly grounded on the deterministic JS physics tools.
  */
@@ -851,11 +873,15 @@ export async function runAgentAssurance(question, currentInputs = null, geminiAp
       parts: [
         {
           text:
-            'You are SEAL (Subsurface Evaluation & Assurance Lead), the executive containment assurance agent inside IFT-SafePredict (DNV-RP-J203 / NSTA compliance). ' +
+            'You are SEAL (Subsurface Evaluation & Assurance Lead), the executive containment screening agent inside IFT-SafePredict. ' +
             'STRICT SCIENTIFIC RULE: NEVER invent or calculate IFT, density, leverage, UIF, or column height yourself. ' +
             'Always call evaluateAndOptimizeFormation first. When a user asks about any regional formation (e.g. Sarawak / Kasawari, ' +
             'Permian, Malay Basin, Gippsland, etc.), match siteId if listed (leaving depthM, P_MPa, and T_C unset so curated atlas values are preserved unless the user explicitly specified numbers) ' +
             'or supply realistic literature thermobaric parameters within reservoir conditions (typically P = 8–45 MPa, T = 35–135 °C; converting salinity wt% or ppm accurately to mol/kg: 35,000 ppm NaCl = 0.60 mol/kg). ' +
+            'TERMINOLOGY RULES: (1) Always say "composite trust audit" (never "5-gate audit", "DNV-RP-J203 audit", or imply external third-party audit/certification). ' +
+            '(2) Always say "passes the screening check" or "within validated domain" (never "certified", "can safely hold", or "regulatory-grade"). ' +
+            '(3) Distinguish the reservoir formation (`reservoirFormation`, e.g. Utsira Sand sandstone at Sleipner) from the overlying seal (`caprockSeal`, e.g. Nordland Shale caprock at Sleipner) — NEVER call Utsira a shale! ' +
+            '(4) State clearly that r_c and θ are fixed input assumptions (`capillaryPropagation.assumedInputs`) that combine with MARS IFT to yield P_c and H_cap — NEVER invert cause and effect (never say IFT "supports a pore throat radius"). ' +
             'FORMATTING RULE: Write a crisp 4-bullet executive engineering synthesis (`* **Heading:** text`) citing ONLY the verified tool output numbers. ' +
             'Use clean Unicode engineering symbols (CO₂, Δρ, r_c, θ, °C, kg/m³, g/cm³, mN/m, ≤, ≥, ×) — NEVER output raw LaTeX dollar signs ($...$) or \\text{...} commands.',
         },
@@ -923,6 +949,9 @@ export async function runAgentAssurance(question, currentInputs = null, geminiAp
       name: fnCallPart.functionCall.name,
       response: {
         siteName: activeRun.resolved.siteName,
+        reservoirFormation: activeRun.resolved.siteName,
+        caprockSeal: activeRun.resolved.rock?.sealName || activeRun.resolved.rock?.label || 'Regional caprock seal',
+        rcDerivationBasis: activeRun.resolved.rock?.rcBasis || 'assumed fixed pore-throat radius',
         basisNote: activeRun.resolved.basisNote,
         inputs: activeRun.resolved.inputs,
         marsIFT_mNm: {
@@ -932,7 +961,14 @@ export async function runAgentAssurance(question, currentInputs = null, geminiAp
           equation: activeRun.prescription.eqCited,
         },
         trustAudit: activeRun.audit,
-        capillaryPropagation: activeRun.propagation,
+        capillaryPropagation: {
+          ...activeRun.propagation,
+          assumedInputs: {
+            rcLabel: activeRun.propagation.rcLabel,
+            thetaDeg: activeRun.propagation.thetaDeg,
+            note: 'r_c and theta are fixed input assumptions driving P_c and H_cap (not outputs of the model)',
+          },
+        },
         optimizationWindow: activeRun.optimization || null,
         verdict: {
           decision: activeRun.prescription.decision,
@@ -991,7 +1027,7 @@ export async function runAgentAssurance(question, currentInputs = null, geminiAp
       .trim();
 
     if (textOut) {
-      activeRun.llmNarrative = textOut;
+      activeRun.llmNarrative = sanitizeExecutiveNarrative(textOut, activeRun);
     }
 
     return activeRun;

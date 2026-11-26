@@ -1,6 +1,6 @@
 /**
  * Pure data constants & formatting utilities for Geological Formation Presets,
- * Extended Regional CCS Basin Atlas, and MICP-anchored Capillary Propagation.
+ * Extended Regional CCS Basin Atlas, and Young–Laplace Capillary Seal Propagation.
  *
  * Synchronized 100% with Thesis (§4.11–4.12, Tables 4.15–4.19) & Paper 4 (Tables 5–7).
  */
@@ -197,6 +197,8 @@ export const REGIONAL_BASINS = [
 export const CAP_PRESETS = {
   sleipner: {
     label: 'Sleipner (Nordland Shale Caprock)',
+    sealName: 'Nordland Shale caprock',
+    rcBasis: 'derived from literature entry pressure Pe = 1.80 MPa at gamma_lit = 31.0 mN/m',
     trap: 'open',
     mode: 'micp',
     rcUm: 0.0298,
@@ -213,6 +215,8 @@ export const CAP_PRESETS = {
   },
   insalah: {
     label: 'In Salah (Krechba Crestal Patch — PR-EOS)',
+    sealName: 'Krechba Carboniferous sandstone intra-reservoir throats (beneath C10.3 mudstone seal)',
+    rcBasis: 'illustrative sandstone throat radius for intra-reservoir patch sensitivity',
     trap: 'structural',
     mode: 'micp',
     rcUm: 1.00,
@@ -229,9 +233,11 @@ export const CAP_PRESETS = {
   },
   sarawak: {
     label: 'Sarawak Kasawari (Setap Shale Caprock)',
+    sealName: 'Setap Shale regional caprock',
+    rcBasis: 'illustrative regional shale throat radius input (25.0 nm)',
     trap: 'structural',
     mode: 'micp',
-    rcUm: 0.025, // 25 nm Setap Shale regional seal MICP throat
+    rcUm: 0.025,
     Pe: 2.20,
     theta: 35,
     drho: 506.7,
@@ -245,6 +251,8 @@ export const CAP_PRESETS = {
   },
   insalah_cooled: {
     label: 'In Salah (Cooled-Plume Near-Wellbore Ref)',
+    sealName: 'Krechba sandstone near-wellbore cooled zone',
+    rcBasis: 'illustrative sandstone throat radius (1.00 µm)',
     trap: 'structural',
     mode: 'micp',
     rcUm: 1.00,
@@ -261,14 +269,16 @@ export const CAP_PRESETS = {
   },
   custom: {
     label: 'Custom Formation Synced to Live EOS',
+    sealName: 'Assumed regional caprock seal',
+    rcBasis: 'user-adjustable screening throat radius input',
     trap: 'open',
     mode: 'micp',
     rcUm: 0.050,
     Pe: 1.50,
     theta: 30,
     drho: 500.0,
-    gammaLit: 30.0,
-    litSource: 'User reference value',
+    gammaLit: 0,
+    litSource: 'Optional user comparator',
     A: 50,
     phi: 0.15,
     rhoCO2: 600.0,

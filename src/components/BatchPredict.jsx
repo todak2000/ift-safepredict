@@ -181,7 +181,7 @@ export default function BatchPredict() {
       {running && (
         <div style={{ marginTop: '1rem' }}>
           <p className="text-muted" style={{ fontSize: '0.75rem' }}>
-            Evaluating MARS + PR-EOS + 5-Gate Trust… {progress}%
+            Evaluating MARS + PR-EOS + Composite Trust… {progress}%
           </p>
         </div>
       )}

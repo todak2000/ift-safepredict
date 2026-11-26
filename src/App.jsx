@@ -305,8 +305,8 @@ export default function App() {
                 </button>
               </div>
             )}
-            <UncertaintyChart result={result} history={history} />
-            {result && <SensitivityChart inputs={inputs} />}
+            <UncertaintyChart result={result} history={history} theme={theme} />
+            {result && <SensitivityChart inputs={inputs} theme={theme} />}
             {result && <CapillaryHeightCalculator result={result} inputs={inputs} />}
             {result && <StorageEstimator result={result} />}
             <InputHistory onLoad={setInputs} />
@@ -373,9 +373,9 @@ export default function App() {
                 <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '0.35rem' }}>T<sub>r</sub> &ge; 1.0 and P<sub>r</sub> &ge; 1.0 &mdash; EV R<sup>2</sup> = 0.9452 (5.62% nRMSE); portable UIF<sub>interval</sub> = 1.06 (Green tier).</div>
               </div>
               <div style={{ background: 'var(--bg-input)', padding: '1rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)' }}>
-                <div style={{ fontSize: '0.74rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--green)', marginBottom: '0.4rem' }}>5-Gate Composite Trust</div>
+                <div style={{ fontSize: '0.74rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--green)', marginBottom: '0.4rem' }}>Composite Trust Audit</div>
                 <div style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--text-main)', fontFamily: 'var(--font-mono)' }}>Zero Hallucination</div>
-                <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '0.35rem' }}>Synthesises Kay&apos;s regime, Hat leverage h*, &plusmn;2 °C near-critical window, UIF<sub>interval</sub> portability, and MICP capillary odds.</div>
+                <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '0.35rem' }}>Synthesises Kay&apos;s regime, Hat leverage h*, &plusmn;2 °C near-critical window, UIF<sub>interval</sub> portability, and capillary seal odds.</div>
               </div>
             </div>
 

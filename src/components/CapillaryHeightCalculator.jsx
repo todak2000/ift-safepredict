@@ -51,11 +51,7 @@ export default function CapillaryHeightCalculator({ result, inputs }) {
     } else if (pName.includes('sarawak') || pName.includes('kasawari')) {
       applyPreset('sarawak', inputs, result)
     } else if (inputs?.drho) {
-      setPreset('custom')
-      setDrho(Number((inputs.drho * 1000).toFixed(1)))
-      if (result?.rho_co2) {
-        setRhoCO2(Number((result.rho_co2 * 1000).toFixed(1)))
-      }
+      applyPreset('custom', inputs, result)
     }
   }, [inputs?.presetName, inputs?.drho, result?.rho_co2])
 
@@ -64,9 +60,13 @@ export default function CapillaryHeightCalculator({ result, inputs }) {
   const ift90 = result?.p90
 
   const pNameLower = (inputs?.presetName || '').toLowerCase()
-  const presetMismatch =
-    (preset.startsWith('insalah') && pNameLower.includes('sleipner')) ||
-    (preset === 'sleipner' && pNameLower.includes('in salah'))
+  const presetMismatch = Boolean(
+    pNameLower &&
+      preset !== 'custom' &&
+      ((preset === 'sleipner' && !pNameLower.includes('sleipner')) ||
+        (preset.startsWith('insalah') && !pNameLower.includes('in salah')) ||
+        (preset === 'sarawak' && !pNameLower.includes('sarawak') && !pNameLower.includes('kasawari')))
+  )
 
   const calcs = useMemo(() => {
     if (!ift50 || !drho || drho <= 0) return null
@@ -112,7 +112,7 @@ export default function CapillaryHeightCalculator({ result, inputs }) {
             Capillary Column Height &amp; Static Patch Sensitivity
           </span>
           <span className="card-subtitle">
-            Non-circular MICP core propagation: H<sub>cap</sub>(γ) = 2γ&middot;cos&theta; / (r<sub>c</sub>&middot;&Delta;&rho;&middot;g)
+            Capillary seal propagation (r<sub>c</sub> from P<sub>e</sub> or core): H<sub>cap</sub>(γ) = 2γ&middot;cos&theta; / (r<sub>c</sub>&middot;&Delta;&rho;&middot;g)
           </span>
         </div>
         <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
@@ -120,9 +120,9 @@ export default function CapillaryHeightCalculator({ result, inputs }) {
             type="button"
             className={`preset-chip ${mode === 'micp' ? 'active' : ''}`}
             onClick={() => setMode('micp')}
-            title="Independent Mercury Injection Capillary Pressure (MICP) throat radius — non-circular"
+            title="Fixed pore-throat radius derived from entry pressure P_e or core measurement"
           >
-            MICP Core r<sub>c</sub> (Recommended)
+            Fixed Throat r<sub>c</sub> (Recommended)
           </button>
           <button
             type="button"
@@ -183,7 +183,7 @@ export default function CapillaryHeightCalculator({ result, inputs }) {
         }}>
           <Info size={15} color="var(--yellow)" style={{ flexShrink: 0 }} />
           <span>
-            Note: Deriving r<sub>c</sub> = 2&gamma;<sub>lit</sub>&middot;cos&theta; / P<sub>e</sub> makes H(&gamma;) = [P<sub>e</sub>/(&Delta;&rho;&middot;g)]&middot;(&gamma;/&gamma;<sub>lit</sub>). Use <strong>MICP Core r<sub>c</sub></strong> mode for non-circular physical propagation.
+            Note: Deriving r<sub>c</sub> = 2&gamma;<sub>lit</sub>&middot;cos&theta; / P<sub>e</sub> makes H(&gamma;) = [P<sub>e</sub>/(&Delta;&rho;&middot;g)]&middot;(&gamma;/&gamma;<sub>lit</sub>). Use <strong>Fixed Throat r<sub>c</sub></strong> mode for independent physical propagation.
           </span>
         </div>
       )}
@@ -198,7 +198,7 @@ export default function CapillaryHeightCalculator({ result, inputs }) {
                 {rcUm < 0.1 ? `${(rcUm * 1000).toFixed(1)} nm` : `${rcUm.toFixed(2)} µm`}
               </span>
             </div>
-            <input type="number" value={rcUm} min={0.005} max={50} step={0.005} onChange={e => setRcUm(+e.target.value)} />
+            <input type="number" value={rcUm} min={0.005} max={50} step="any" onChange={e => setRcUm(+e.target.value)} />
           </div>
         ) : (
           <div className="cap-field">
@@ -206,7 +206,7 @@ export default function CapillaryHeightCalculator({ result, inputs }) {
               <span className="param-label">Entry Pressure (P<sub>e</sub>)</span>
               <span className="param-val-pill mono">{Pe.toFixed(2)} MPa</span>
             </div>
-            <input type="number" value={Pe} min={0.1} max={20} step={0.1} onChange={e => setPe(+e.target.value)} />
+            <input type="number" value={Pe} min={0.1} max={20} step="any" onChange={e => setPe(+e.target.value)} />
           </div>
         )}
 
@@ -215,7 +215,7 @@ export default function CapillaryHeightCalculator({ result, inputs }) {
             <span className="param-label">Contact Angle (&theta;)</span>
             <span className="param-val-pill mono">{theta}°</span>
           </div>
-          <input type="number" value={theta} min={0} max={85} step={1} onChange={e => setTheta(+e.target.value)} />
+          <input type="number" value={theta} min={0} max={85} step="any" onChange={e => setTheta(+e.target.value)} />
         </div>
 
         <div className="cap-field">
@@ -223,7 +223,7 @@ export default function CapillaryHeightCalculator({ result, inputs }) {
             <span className="param-label">Density Contrast (&Delta;&rho;)</span>
             <span className="param-val-pill mono">{drho.toFixed(1)} kg/m³</span>
           </div>
-          <input type="number" value={drho} min={50} max={1100} step={5} onChange={e => setDrho(+e.target.value)} />
+          <input type="number" value={drho} min={50} max={1100} step="any" onChange={e => setDrho(+e.target.value)} />
         </div>
 
         <div className="cap-field">
@@ -240,9 +240,9 @@ export default function CapillaryHeightCalculator({ result, inputs }) {
         <div className="cap-field">
           <div className="cap-field-header">
             <span className="param-label">Literature IFT (&gamma;<sub>lit</sub>)</span>
-            <span className="param-val-pill mono">{gammaLit.toFixed(1)} mN/m</span>
+            <span className="param-val-pill mono">{gammaLit > 0 ? `${gammaLit.toFixed(1)} mN/m` : 'Off'}</span>
           </div>
-          <input type="number" value={gammaLit} min={10} max={80} step={0.5} onChange={e => setGammaLit(+e.target.value)} />
+          <input type="number" value={gammaLit} min={0} max={80} step="any" onChange={e => setGammaLit(+e.target.value)} />
         </div>
       </div>
 
@@ -253,28 +253,28 @@ export default function CapillaryHeightCalculator({ result, inputs }) {
               <span className="param-label">Patch Area (A)</span>
               <span className="param-val-pill mono">{A} km²</span>
             </div>
-            <input type="number" value={A} min={1} max={1000} step={1} onChange={e => setA(+e.target.value)} />
+            <input type="number" value={A} min={1} max={1000} step="any" onChange={e => setA(+e.target.value)} />
           </div>
           <div className="cap-field">
             <div className="cap-field-header">
               <span className="param-label">Porosity (&phi;)</span>
               <span className="param-val-pill mono">{phi.toFixed(2)}</span>
             </div>
-            <input type="number" value={phi} min={0.02} max={0.40} step={0.01} onChange={e => setPhi(+e.target.value)} />
+            <input type="number" value={phi} min={0.02} max={0.40} step="any" onChange={e => setPhi(+e.target.value)} />
           </div>
           <div className="cap-field">
             <div className="cap-field-header">
               <span className="param-label">In-Situ &rho;<sub>CO₂</sub></span>
               <span className="param-val-pill mono">{rhoCO2.toFixed(1)} kg/m³</span>
             </div>
-            <input type="number" value={rhoCO2} min={100} max={1000} step={5} onChange={e => setRhoCO2(+e.target.value)} />
+            <input type="number" value={rhoCO2} min={100} max={1000} step="any" onChange={e => setRhoCO2(+e.target.value)} />
           </div>
           <div className="cap-field">
             <div className="cap-field-header">
               <span className="param-label">Max Saturation (S<sub>CO₂,max</sub>)</span>
               <span className="param-val-pill mono">{SCO2max.toFixed(2)}</span>
             </div>
-            <input type="number" value={SCO2max} min={0.10} max={0.90} step={0.05} onChange={e => setSCO2max(+e.target.value)} />
+            <input type="number" value={SCO2max} min={0.10} max={0.90} step="any" onChange={e => setSCO2max(+e.target.value)} />
           </div>
         </div>
       )}

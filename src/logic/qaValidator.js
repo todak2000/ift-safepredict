@@ -7,7 +7,7 @@ export const Q_BASE = { sub: 2.6928, sup: 2.2507 };
 // Cross-laboratory empirical quantile ratios UIF_interval = q80(EV) / q80(calibration)
 export const UIF_PORTABILITY = { sub: 3.5855, sup: 1.0559 };
 
-// Amber leverage-extrapolation multiplier & Red ~95% escalation multiplier
+// Amber leverage-extrapolation multiplier & capped 2.5× escalated screening multiplier
 const UIF_RED = 2.5;
 const UIF_NEAR_CRIT = 1.97; // Yellow-tier escalation for near-critical gap
 
@@ -62,6 +62,7 @@ export const calculateP10P90 = (prediction, inputs, scaledFeatures, regime) => {
   const { adStatus, h, hStar } = computeADStatus(scaledFeatures, regime);
 
   const isNearCritical = !!inputs.isNearCritical;
+  const isBoundaryAdjacent = !!inputs.isBoundaryAdjacent;
   const p50Clipped = !!inputs.p50Clipped;
   const liEtAlFlag = inputs.brineType === 'Na2SO4';
   const mixedKClFlag = inputs.brineType === 'NaCl+KCl' && regime === 'sub';
@@ -108,7 +109,7 @@ export const calculateP10P90 = (prediction, inputs, scaledFeatures, regime) => {
     status = maxTier(status, 'AMBER');
     uif = Math.max(uif, UIF_RED);
     reasons.push(
-      'Subcritical cross-lab portability caution (UIF_interval = 3.59): screening interval escalated to ~95% PI (2.5× q80); collect n ≥ 30 local measurements for regulatory permitting.'
+      'Subcritical cross-lab portability caution (UIF_interval = 3.59, Red band): 2.5× escalated screening interval (capped) applied and reported as AMBER; collect n ≥ 30 local measurements for site-specific calibration.'
     );
   }
 
@@ -181,6 +182,8 @@ export const calculateP10P90 = (prediction, inputs, scaledFeatures, regime) => {
       status: isNearCritical ? 'AMBER' : 'GREEN',
       detail: isNearCritical
         ? `${regime === 'sup' ? 'Supercritical' : 'Subcritical'} (inside ±2 °C & ±0.5 MPa near-critical gap)`
+        : inputs.isBoundaryAdjacent
+        ? `${regime === 'sup' ? 'Supercritical (35-term)' : 'Subcritical (16-term)'} — boundary-adjacent (Pr or Tr within ±5% of 1.0)`
         : `${regime === 'sup' ? 'Supercritical (35-term)' : 'Subcritical (16-term)'} — unambiguous phase state`,
     },
     {
@@ -196,7 +199,7 @@ export const calculateP10P90 = (prediction, inputs, scaledFeatures, regime) => {
       detail:
         regime === 'sup'
           ? 'UIF_interval = 1.06 (Green portable, 75.0% EV coverage)'
-          : 'UIF_interval = 3.59 (Red shift; 2.5× screening width applied until n ≥ 30 local calibration)',
+          : 'UIF_interval = 3.59 (Red band; multiplier capped at 2.5× → AMBER until n ≥ 30 local calibration)',
     },
     {
       id: 'chemistry',
