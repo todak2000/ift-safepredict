@@ -263,7 +263,7 @@ export default function AgentCopilot({ currentInputs, onApplyInputs }) {
               <span>3. Operating Window &amp; PDF Brief</span>
             </div>
             <p style={{ fontSize: '0.88rem', color: 'var(--text-muted)', lineHeight: 1.6 }}>
-              Sweeps reservoir depth &amp; 25-state operating grids to identify certified GREEN (P*, T*) states, computes MICP caprock clearance odds, and exports a branded DNV-RP-J203 PDF Executive Brief.
+              Sweeps reservoir depth &amp; 25-state operating grids to identify GREEN (P*, T*) states within the validated domain, computes MICP caprock clearance odds, and exports a PDF Executive Brief.
             </p>
           </div>
         </div>
@@ -449,7 +449,7 @@ export default function AgentCopilot({ currentInputs, onApplyInputs }) {
                 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '0.6rem' }}>
                     <span style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--green)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                      <Compass size={16} /> Recommended GREEN Operating Window ({report.optimization.greenCount}/{report.optimization.evaluatedCount} states certified)
+                      <Compass size={16} /> Recommended GREEN Operating Window ({report.optimization.greenCount}/{report.optimization.evaluatedCount} states screened)
                     </span>
                     {onApplyInputs && (
                       <button

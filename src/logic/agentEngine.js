@@ -330,7 +330,7 @@ export function propagateCapillaryAssurance(resolvedState, marsResult, envelope,
 /**
  * Tool 6 (Optimization): Deterministic Operating-Window Optimizer (`optimizeOperatingWindow`)
  * Sweeps a 5×5 (P, T) + stream-purity envelope around the target formation to discover
- * the exact GREEN-certified operating state maximizing conservative P90 seal height & storage mass!
+ * the GREEN-screened operating state maximizing conservative P90 seal height & storage mass.
  */
 export function optimizeOperatingWindow(resolvedState) {
   const { inputs, rock } = resolvedState;
@@ -650,7 +650,7 @@ function buildPipelineResult({
       step: 3,
       tool: 'auditCompositeTrust',
       badge: audit.compositeVerdict,
-      title: '5-Gate Composite Trust Audit',
+      title: 'Composite Trust Audit',
       detail: `Leverage h = ${audit.leverageH} (threshold h* = ${audit.leverageThreshold}) · UIF_interval = ${audit.uifPortability.toFixed(2)} · Applied multiplier = ${audit.uifApplied.toFixed(2)}×`,
     },
     {
@@ -675,7 +675,7 @@ function buildPipelineResult({
       tool: 'optimizeOperatingWindow',
       badge: `${optimization.greenCount}/${optimization.evaluatedCount} GREEN`,
       title: 'Operating Window Optimization',
-      detail: `Certified window P ∈ [${optimization.safeWindowP_MPa[0].toFixed(1)}, ${optimization.safeWindowP_MPa[1].toFixed(1)}] MPa, T ∈ [${optimization.safeWindowT_C[0].toFixed(1)}, ${optimization.safeWindowT_C[1].toFixed(1)}] °C → Optimal P* = ${optimization.bestBalanced.P.toFixed(2)} MPa, T* = ${optimization.bestBalanced.T_C.toFixed(1)} °C (H90 = ${optimization.bestBalanced.H90} m)`,
+      detail: `Screened window P ∈ [${optimization.safeWindowP_MPa[0].toFixed(1)}, ${optimization.safeWindowP_MPa[1].toFixed(1)}] MPa, T ∈ [${optimization.safeWindowT_C[0].toFixed(1)}, ${optimization.safeWindowT_C[1].toFixed(1)}] °C → Optimal P* = ${optimization.bestBalanced.P.toFixed(2)} MPa, T* = ${optimization.bestBalanced.T_C.toFixed(1)} °C (H90 = ${optimization.bestBalanced.H90} m)`,
     });
   }
 
@@ -683,10 +683,10 @@ function buildPipelineResult({
     step: trace.length + 1,
     tool: 'prescribeEngineeringAction',
     badge: prescription.decision,
-    title: 'Regulatory Verdict & Action Plan',
+    title: 'Screening Verdict & Action Plan',
     detail: prescription.experimentalGapSpec
       ? `${prescription.decision} — Targeted laboratory verification prescribed`
-      : `${prescription.decision} — Certified within validated domain`,
+      : `${prescription.decision} — Within validated domain`,
   });
 
   return {

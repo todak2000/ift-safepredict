@@ -89,7 +89,7 @@ export default function PredictionDisplay({ result, inputs, unitSystem, onOpenAg
             <Download size={13} />
             <span className="btn-label">CSV</span>
           </button>
-          <button className="btn btn-secondary" onClick={handlePDF} title="Generate certified technical PDF report">
+          <button className="btn btn-secondary" onClick={handlePDF} title="Generate technical PDF report">
             <Download size={13} />
             <span className="btn-label">PDF</span>
           </button>

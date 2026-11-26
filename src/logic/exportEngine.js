@@ -229,12 +229,12 @@ export const exportPDF = async (inputs, result, regime) => {
   autoTable(doc, {
     startY: yKpi + 26,
     margin: TABLE_MARGIN,
-    head: [['Containment Assurance Metric', 'Certified Result', 'Reference Basis']],
+    head: [['Containment Assurance Metric', 'Result', 'Reference Basis']],
     body: [
       ['Composite Trust Verdict', result.status, `Multiplier = ${Number(result.uif).toFixed(2)}x`],
       ['Thermodynamic Regime', regime === 'sup' ? 'Supercritical (Sup-MARS-35t)' : 'Subcritical (Sub-MARS-16t)', 'Kay\'s Mixing Rule'],
       ['Applicability Domain Leverage', `h = ${result.h?.toFixed(4)} (Threshold h* = ${result.hStar?.toFixed(4)})`, `AD Status: ${result.adStatus || result.status}`],
-      ['5-Gate Assurance Finding', toPdfSafeText(result.message), 'Conformal Audit'],
+      ['Assurance Finding', toPdfSafeText(result.message), 'Conformal Audit'],
     ],
     columnStyles: {
       0: { cellWidth: 52, fontStyle: 'bold' },
@@ -410,7 +410,7 @@ export const exportAssuranceBriefPDF = async (report) => {
       head: [['Operating Window Analysis (25-State Grid)', 'Pressure', 'Temperature', 'Fluid Densities', 'MARS IFT & P90 Seal']],
       body: [
         [
-          `Certified GREEN Corridor (${opt.greenCount}/${opt.evaluatedCount} states)`,
+          `GREEN Corridor (${opt.greenCount}/${opt.evaluatedCount} states)`,
           `${opt.safeWindowP_MPa[0].toFixed(1)} - ${opt.safeWindowP_MPa[1].toFixed(1)} MPa`,
           `${opt.safeWindowT_C[0].toFixed(1)} - ${opt.safeWindowT_C[1].toFixed(1)} °C`,
           'PR-EOS Coupled',
@@ -449,7 +449,7 @@ export const exportAssuranceBriefPDF = async (report) => {
   autoTable(doc, {
     startY: y,
     margin: TABLE_MARGIN,
-    head: [['Containment Assessment', 'Engineering Finding & Regulatory Prescription']],
+    head: [['Containment Assessment', 'Engineering Finding & Screening Prescription']],
     body: [
       [
         'Thermobaric & Brine State',

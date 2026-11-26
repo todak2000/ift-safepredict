@@ -3,7 +3,7 @@ import { AlertTriangle, ShieldAlert, ShieldCheck, CheckCircle2 } from 'lucide-re
 import RichScientificText from './RichScientificText.jsx'
 
 const LABELS = {
-  GREEN: <>COMPOSITE VERDICT: GREEN &middot; Certified In-Domain &amp; Portable</>,
+  GREEN: <>COMPOSITE VERDICT: GREEN &middot; In-Domain &amp; Portable</>,
   AMBER: <>COMPOSITE VERDICT: YELLOW / AMBER &middot; Caution &mdash; Interval Escalated or Local Verification Advised</>,
   RED:   <>COMPOSITE VERDICT: RED &middot; Extrapolation / Uncalibrated Shift &mdash; Do Not Rely Without Lab Data</>,
 }

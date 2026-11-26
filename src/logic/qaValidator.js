@@ -161,7 +161,7 @@ export const calculateP10P90 = (prediction, inputs, scaledFeatures, regime) => {
 
   const message =
     reasons.length === 0
-      ? `Composite Assurance GREEN: Within applicability domain (h = ${h.toFixed(4)} ≤ h* = ${hStar.toFixed(4)}) and portable supercritical conformal regime (UIF_interval = 1.06). Formal 80% prediction interval applied.`
+      ? `Composite Assurance GREEN: Within applicability domain (h = ${h.toFixed(4)} ≤ h* = ${hStar.toFixed(4)}) and portable supercritical conformal regime (UIF_interval = 1.06). Screening-grade 80% prediction interval applied.`
       : reasons.join(' ');
 
   // Petroleum engineering convention: P10 = optimistic (high IFT) bound; P90 = conservative (low IFT) bound
